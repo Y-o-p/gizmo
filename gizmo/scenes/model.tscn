@@ -1,0 +1,43 @@
+[gd_scene load_steps=7 format=3 uid="uid://cc6ht2rvnq6x2"]
+
+[ext_resource type="PackedScene" uid="uid://bhf43txah4883" path="res://scenes/selection.tscn" id="1_d5leo"]
+[ext_resource type="Script" uid="uid://bbmlrtiumh7yc" path="res://scripts/model.gd" id="1_rka1o"]
+[ext_resource type="Script" uid="uid://21b5m0wyjjr1" path="res://scripts/camera_3d.gd" id="2_d5leo"]
+
+[sub_resource type="ORMMaterial3D" id="ORMMaterial3D_l528w"]
+emission_enabled = true
+emission = Color(0.57, 0.57, 0.57, 1)
+grow_amount = -0.328
+stencil_flags = 2
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_rka1o"]
+
+[sub_resource type="Environment" id="Environment_rka1o"]
+ambient_light_sky_contribution = 0.85
+volumetric_fog_enabled = true
+
+[node name="Model" type="Node3D"]
+
+[node name="Selection" parent="." node_paths=PackedStringArray("model") instance=ExtResource("1_d5leo")]
+model = NodePath("../Model")
+
+[node name="Model" type="MeshInstance3D" parent="."]
+material_override = SubResource("ORMMaterial3D_l528w")
+mesh = SubResource("ArrayMesh_rka1o")
+script = ExtResource("1_rka1o")
+
+[node name="CameraPivot" type="Node3D" parent="."]
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot" node_paths=PackedStringArray("selection")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.179163)
+projection = 1
+size = 1.474
+near = 0.001
+script = ExtResource("2_d5leo")
+selection = NodePath("../../Selection")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_rka1o")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.7653534, 0.46334735, 0.44670272, -0.5773011, 0.18739267, 0.79473746, 0.28453064, -0.86613697, 0.4109125, 0, 0, 0)

@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://dvocv37t1kffx"]
+
+[ext_resource type="Script" uid="uid://bm2cyh83vr7lq" path="res://scripts/surface.gd" id="1_tap8s"]
+
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_jsp07"]
+
+[node name="Surface" type="MeshInstance2D"]
+mesh = SubResource("ImmediateMesh_jsp07")
+script = ExtResource("1_tap8s")

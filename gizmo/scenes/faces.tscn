@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3 uid="uid://n137tdf8txlp"]
+
+[ext_resource type="Script" uid="uid://420bgbkweu7t" path="res://scripts/faces.gd" id="2_g62jk"]
+
+[node name="Faces" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("2_g62jk")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+zoom = Vector2(1, -1)
