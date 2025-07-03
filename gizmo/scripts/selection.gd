@@ -8,9 +8,15 @@ var tool: MeshDataTool
 		_refresh_tool()
 
 var face := 0
-var face_vertex := 0
 @export_range(0, 2) var edge: int = 0
 @export_range(0, 1) var vertex: int = 0
+
+enum Mode {
+	FACE,
+	EDGE,
+	VERTEX
+}
+var mode = Mode.FACE
 
 signal face_changed(a: Vector3, b: Vector3, c: Vector3)
 signal edge_changed(a: Vector3, b: Vector3)
@@ -18,6 +24,14 @@ signal vertex_changed(a: Vector3)
 
 func _ready() -> void:
 	model.geometry_added.connect(_refresh_tool)
+	for command_str in User.stack.commands:
+		var command = User.stack.string_to_command(command_str)
+		if command is Callable:
+			command.call(self, model)
+		else:
+			print("Error: ", command)
+	
+	print("Mode: ", mode)
 
 func _refresh_tool():
 	tool = MeshDataTool.new()
