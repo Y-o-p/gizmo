@@ -1,7 +1,8 @@
-[gd_scene load_steps=7 format=3 uid="uid://cc6ht2rvnq6x2"]
+[gd_scene load_steps=8 format=3 uid="uid://cc6ht2rvnq6x2"]
 
-[ext_resource type="PackedScene" uid="uid://bhf43txah4883" path="res://scenes/selection.tscn" id="1_d5leo"]
+[ext_resource type="Script" uid="uid://b6wtute28vynl" path="res://scripts/selection.gd" id="1_30clo"]
 [ext_resource type="Script" uid="uid://bbmlrtiumh7yc" path="res://scripts/model.gd" id="1_rka1o"]
+[ext_resource type="Script" uid="uid://dg6ak33eu1avv" path="res://scripts/model_overlay.gd" id="2_30clo"]
 [ext_resource type="Script" uid="uid://21b5m0wyjjr1" path="res://scripts/camera_3d.gd" id="2_d5leo"]
 
 [sub_resource type="ORMMaterial3D" id="ORMMaterial3D_l528w"]
@@ -18,8 +19,13 @@ volumetric_fog_enabled = true
 
 [node name="Model" type="Node3D"]
 
-[node name="Selection" parent="." node_paths=PackedStringArray("model") instance=ExtResource("1_d5leo")]
+[node name="Selection" type="Node" parent="." node_paths=PackedStringArray("model")]
+script = ExtResource("1_30clo")
 model = NodePath("../Model")
+
+[node name="ModelOverlay" type="Node" parent="." node_paths=PackedStringArray("selection")]
+script = ExtResource("2_30clo")
+selection = NodePath("../Selection")
 
 [node name="Model" type="MeshInstance3D" parent="."]
 material_override = SubResource("ORMMaterial3D_l528w")
@@ -34,7 +40,7 @@ projection = 1
 size = 1.474
 near = 0.001
 script = ExtResource("2_d5leo")
-selection = NodePath("../../Selection")
+selection = NodePath("")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_rka1o")
