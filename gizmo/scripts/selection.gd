@@ -32,6 +32,7 @@ func _ready() -> void:
 			print("Error: ", command)
 	
 	print("Mode: ", mode)
+	
 
 func _refresh_tool():
 	tool = MeshDataTool.new()
