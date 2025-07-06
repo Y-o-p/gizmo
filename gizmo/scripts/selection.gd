@@ -2,10 +2,7 @@ extends Node
 class_name Selection
 
 var tool: MeshDataTool
-@export var model: Model:
-	set(value):
-		model = value
-		_refresh_tool()
+@export var model: Model
 
 var face := 0
 @export_range(0, 2) var edge: int = 0
@@ -23,6 +20,7 @@ signal edge_changed(a: Vector3, b: Vector3)
 signal vertex_changed(a: Vector3)
 
 func _ready() -> void:
+	_refresh_tool()
 	model.geometry_added.connect(_refresh_tool)
 	for command_str in User.stack.commands:
 		var command = User.stack.string_to_command(command_str)
@@ -60,6 +58,10 @@ func _input(event: InputEvent) -> void:
 	elif event.is_action_pressed("vertex"):
 		vertex = (vertex + 1) % 2
 		_emit_vertex()
+	elif event.is_action_pressed("down"):
+		tool.set_vertex(get_vertex(), tool.get_vertex(get_vertex()) + Vector3.DOWN)
+		model.mesh.clear_surfaces()
+		tool.commit_to_surface(model.mesh)
 
 func _emit_face_vertices():
 	var a = tool.get_vertex(tool.get_face_vertex(face, 0))
@@ -81,3 +83,19 @@ func _emit_vertex():
 		tool.get_face_vertex(face, 2),
 	]
 	vertex_changed.emit(tool.get_vertex(indices[(edge + vertex) % 3]))
+
+func get_face_vertices():
+	return [
+		tool.get_face_vertex(face, 0),
+		tool.get_face_vertex(face, 1),
+		tool.get_face_vertex(face, 2),
+	]
+
+func get_edge_vertices():
+	return [
+		tool.get_edge_vertex(tool.get_face_edge(face, edge), 0),
+		tool.get_edge_vertex(tool.get_face_edge(face, edge), 1),
+	]
+
+func get_vertex():
+	return get_face_vertices()[(edge + vertex) % 3]
