@@ -37,13 +37,13 @@ func _parse_first_token(token: String):
 func _parse_mode_token(token: String):
 	match token:
 		"f":
-			return func(selection: Selection, model: Model):
+			return func(selection: Selection):
 				selection.mode = selection.Mode.FACE
 		"e":
-			return func(selection: Selection, model: Model):
+			return func(selection: Selection):
 				selection.mode = selection.Mode.EDGE
 		"v":
-			return func(selection: Selection, model: Model):
+			return func(selection: Selection):
 				selection.mode = selection.Mode.VERTEX
 	
 	return null
