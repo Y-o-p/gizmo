@@ -13,9 +13,7 @@ func _on_face_changed(a, b, c):
 var _clear_face_selection: Callable = func(): pass
 func draw_face_selection(a, b, c):
 	_clear_face_selection.call()
-	
-	var center = (a + b + c) / 3.0
-	var normal = -(b - a).cross(c - a).normalized()
+
 	var line_a: MeshInstance3D = await Draw3D.line(a, b, Color.YELLOW)
 	var line_b: MeshInstance3D = await Draw3D.line(b, c, Color.YELLOW)
 	var line_c: MeshInstance3D = await Draw3D.line(c, a, Color.YELLOW)
@@ -32,7 +30,7 @@ var _clear_edge_selection: Callable = func(): pass
 func draw_edge_selection(a, b):
 	_clear_edge_selection.call()
 
-	var normal: Vector3 = selection.tool.get_face_normal(selection.face)
+	var normal: Vector3 = selection.model.tool.get_face_normal(selection.face)
 	var line_a: MeshInstance3D = await Draw3D.line(normal * 0.01 + a, normal * 0.01 + b, Color.ORANGE_RED)
 	_clear_edge_selection = func():
 		line_a.queue_free()

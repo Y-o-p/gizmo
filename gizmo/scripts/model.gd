@@ -1,6 +1,7 @@
 extends MeshInstance3D
 class_name Model
 
+var tool: MeshDataTool
 var surface_array = []
 var vertices: PackedVector3Array = []
 var indices: PackedInt32Array = []
@@ -37,3 +38,6 @@ func _ready() -> void:
 	surface_mesh_tool.generate_normals()
 	surface_mesh_tool.commit(mesh)
 	geometry_added.emit()
+	
+	tool = MeshDataTool.new()
+	tool.create_from_surface(mesh, 0)
