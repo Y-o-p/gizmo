@@ -12,11 +12,22 @@ enum Mode {
 	EDGE,
 	VERTEX
 }
-var mode = Mode.FACE
+var mode := Mode.FACE
 
 signal face_changed(a: Vector3, b: Vector3, c: Vector3)
 signal edge_changed(a: Vector3, b: Vector3)
 signal vertex_changed(a: Vector3)
+
+func get_selected_vertices() -> Array:
+	match mode:
+		Mode.FACE:
+			return get_selected_face_vertices()
+		Mode.EDGE:
+			return get_selected_edge_vertices()
+		Mode.VERTEX:
+			return [get_selected_vertex()]
+	
+	return []
 
 func get_selected_face_vertices():
 	return [

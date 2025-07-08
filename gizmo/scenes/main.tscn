@@ -1,14 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://dvw6fgot4hlc"]
+[gd_scene load_steps=2 format=3 uid="uid://dvw6fgot4hlc"]
 
-[ext_resource type="PackedScene" uid="uid://n137tdf8txlp" path="res://scenes/faces.tscn" id="1_ig7tw"]
 [ext_resource type="PackedScene" uid="uid://cc6ht2rvnq6x2" path="res://scenes/model.tscn" id="2_0xm2m"]
 
 [node name="ModelView" type="Node"]
 
 [node name="Model" parent="." instance=ExtResource("2_0xm2m")]
-
-[node name="FacesView" type="Window" parent="."]
-oversampling_override = 1.0
-position = Vector2i(0, 36)
-
-[node name="Faces" parent="FacesView" instance=ExtResource("1_ig7tw")]

@@ -1,7 +1,7 @@
 extends MeshInstance3D
 class_name Model
 
-var tool: MeshDataTool
+var tool := MeshDataTool.new()
 var surface_array = []
 var vertices: PackedVector3Array = []
 var indices: PackedInt32Array = []
@@ -29,15 +29,17 @@ func _ready() -> void:
 	surface_array[Mesh.ARRAY_VERTEX] = vertices
 	surface_array[Mesh.ARRAY_INDEX] = indices
 	
-
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface_array)
-	create_trimesh_collision()
+	tool.create_from_surface(mesh, 0)
 	
+	rebuild_surface()
+
+func rebuild_surface():
+	mesh.clear_surfaces()
+	tool.commit_to_surface(mesh)
+
 	var surface_mesh_tool := SurfaceTool.new()
 	surface_mesh_tool.create_from(mesh, 0)
 	surface_mesh_tool.generate_normals()
 	surface_mesh_tool.commit(mesh)
 	geometry_added.emit()
-	
-	tool = MeshDataTool.new()
-	tool.create_from_surface(mesh, 0)
