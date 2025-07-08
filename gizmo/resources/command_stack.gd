@@ -3,6 +3,12 @@ class_name CommandStack
 
 @export var commands: PackedStringArray
 
+signal command_added(command: String)
+
+func add_command(command: String):
+	commands.push_back(command)
+	command_added.emit(command)
+
 enum ParseError {
 	NO_TOKENS,
 	FIRST_TOKEN_UNKNOWN,

@@ -60,13 +60,16 @@ func _input(event: InputEvent) -> void:
 		_emit_face_vertices()
 		_emit_edge_vertices()
 		_emit_vertex()
+		User.stack.add_command("j")
 	elif event.is_action_pressed("edge"):
 		edge = (edge + 1) % 3
 		_emit_edge_vertices()
 		_emit_vertex()
+		User.stack.add_command("k")
 	elif event.is_action_pressed("vertex"):
 		vertex = (vertex + 1) % 2
 		_emit_vertex()
+		User.stack.add_command("l")
 
 func _emit_face_vertices():
 	var a = model.tool.get_vertex(model.tool.get_face_vertex(face, 0))
