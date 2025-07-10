@@ -26,7 +26,7 @@ func translate(delta: Vector3):
 func _ready() -> void:
 	User.command = self
 
-func _input(event: InputEvent) -> void:
+func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("translate"):
 		started_command.emit(func(parameters: String):
 			var tokens: PackedStringArray = parameters.split(" ")

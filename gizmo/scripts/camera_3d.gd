@@ -33,7 +33,7 @@ func _process(delta) -> void:
 	
 	_camera_pivot.position = lerp(_camera_pivot.position, _desired_position, 10.0 * delta)
 
-func _input(event: InputEvent) -> void:
+func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action("rotate_mode"):
 		if event.is_released():
 			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
@@ -47,9 +47,7 @@ func _input(event: InputEvent) -> void:
 		select()
 	elif event.is_action_pressed("swap_projection"):
 		projection = (not projection) as int
-
-func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseMotion and Input.is_action_pressed("rotate_mode"):
+	elif event is InputEventMouseMotion and Input.is_action_pressed("rotate_mode"):
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 		_camera_pivot.rotation.x -= event.relative.y * mouse_sensitivity
 		# Prevent the camera from rotating too far up or down.

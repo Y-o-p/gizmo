@@ -22,7 +22,7 @@ Draw3D="*res://globals/draw_3d.gd"
 
 [display]
 
-window/size/initial_position_type=0
+window/size/mode=3
 window/subwindows/embed_subwindows=false
 window/per_pixel_transparency/allowed=true
 
