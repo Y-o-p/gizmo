@@ -2,6 +2,7 @@ extends Node
 class_name Command
 
 signal started_command(param_callback: Callable)
+signal command_completed(command_as_string: String)
 
 @export var selection: Selection
 
@@ -87,7 +88,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if maybe_callable is Callable:
 		started_command.emit(func(parameters: String):
 			maybe_callable.call(parameters)
-			stack.commands.append("%s %s" % [callable.get_method(), parameters])
+			var command_as_string = "%s %s" % [callable.get_method(), parameters]
+			command_completed.emit(command_as_string)
+			stack.commands.append(command_as_string)
 		)
 	else:
+		command_completed.emit(callable.get_method())
 		stack.commands.append(callable.get_method())

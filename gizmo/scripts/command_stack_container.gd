@@ -1,10 +1,10 @@
 extends VBoxContainer
 
 func _ready() -> void:
-	#User.command.stack.command_added.connect(_on_command_added)
+	User.command.command_completed.connect(_on_command_completed)
 	User.command.started_command.connect(_on_command_started)
 
-func _on_command_added(command: String):
+func _on_command_completed(command: String):
 	var label = Label.new()
 	label.text = command
 	add_child(label)
