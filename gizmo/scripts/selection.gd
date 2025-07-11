@@ -12,6 +12,11 @@ enum Mode {
 	EDGE,
 	VERTEX
 }
+var MODE_TO_STR: Dictionary = {
+	Mode.FACE: "j",
+	Mode.EDGE: "k",
+	Mode.VERTEX: "l",
+}
 var mode := Mode.FACE
 
 signal face_changed(a: Vector3, b: Vector3, c: Vector3)
@@ -45,31 +50,29 @@ func get_selected_edge_vertices():
 func get_selected_vertex():
 	return get_selected_face_vertices()[(edge + vertex) % 3]
 
-func _input(event: InputEvent) -> void:
-	if event.is_action_pressed("face"):
-		var edge_idx = model.tool.get_face_edge(face, edge)
-		var edge_faces = model.tool.get_edge_faces(edge_idx)
-		edge_faces.erase(face)
-		var new_face_edge_indices = [
-			model.tool.get_face_edge(edge_faces[0], 0),
-			model.tool.get_face_edge(edge_faces[0], 1),
-			model.tool.get_face_edge(edge_faces[0], 2),
-		]
-		edge = new_face_edge_indices.find(edge_idx)
-		face = edge_faces[0]
-		_emit_face_vertices()
-		_emit_edge_vertices()
-		_emit_vertex()
-		User.stack.add_command("j")
-	elif event.is_action_pressed("edge"):
-		edge = (edge + 1) % 3
-		_emit_edge_vertices()
-		_emit_vertex()
-		User.stack.add_command("k")
-	elif event.is_action_pressed("vertex"):
-		vertex = (vertex + 1) % 2
-		_emit_vertex()
-		User.stack.add_command("l")
+func move_selection():
+	match mode:
+		Mode.FACE:
+			var edge_idx = model.tool.get_face_edge(face, edge)
+			var edge_faces = model.tool.get_edge_faces(edge_idx)
+			edge_faces.erase(face)
+			var new_face_edge_indices = [
+				model.tool.get_face_edge(edge_faces[0], 0),
+				model.tool.get_face_edge(edge_faces[0], 1),
+				model.tool.get_face_edge(edge_faces[0], 2),
+			]
+			edge = new_face_edge_indices.find(edge_idx)
+			face = edge_faces[0]
+			_emit_face_vertices()
+			_emit_edge_vertices()
+			_emit_vertex()
+		Mode.EDGE:
+			edge = (edge + 1) % 3
+			_emit_edge_vertices()
+			_emit_vertex()
+		Mode.VERTEX:
+			vertex = (vertex + 1) % 2
+			_emit_vertex()
 
 func _emit_face_vertices():
 	var a = model.tool.get_vertex(model.tool.get_face_vertex(face, 0))

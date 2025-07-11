@@ -1,7 +1,7 @@
 extends VBoxContainer
 
 func _ready() -> void:
-	User.stack.command_added.connect(_on_command_added)
+	#User.command.stack.command_added.connect(_on_command_added)
 	User.command.started_command.connect(_on_command_started)
 
 func _on_command_added(command: String):
