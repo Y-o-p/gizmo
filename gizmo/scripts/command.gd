@@ -3,6 +3,7 @@ class_name Command
 
 signal started_command(param_callback: Callable)
 signal command_completed(command_as_string: String)
+signal commands_refreshed(commands: PackedStringArray)
 
 @export var selection: Selection
 
@@ -18,6 +19,10 @@ func load_command_stack(command_stack: CommandStack):
 			command.call(self)
 		else:
 			print("Error: ", command)
+
+################################################################################
+# Command functions
+################################################################################
 
 func face_mode():
 	selection.mode = Selection.Mode.FACE
@@ -43,6 +48,8 @@ func start_translate():
 
 		translate(Vector3(tokens[0].to_float(), tokens[1].to_float(), tokens[2].to_float()))
 
+################################################################################
+
 func translate(delta: Vector3):
 	for vertex in selection.get_selected_vertices():
 		selection.model.tool.set_vertex(
@@ -50,7 +57,17 @@ func translate(delta: Vector3):
 			selection.model.tool.get_vertex(vertex) + delta
 		)
 	
-	selection.model.rebuild_surface()
+	selection.model.refresh()
+
+func pop():
+	stack.commands.remove_at(stack.commands.size() - 1)
+	selection.face = 0
+	selection.edge = 0
+	selection.vertex = 0
+	selection.mode = Selection.Mode.FACE
+	selection.model.build_initial_model()
+	load_command_stack(stack)
+	commands_refreshed.emit(stack.commands)
 
 func _get_event_to_command_dict():
 	var event_to_command = {}
@@ -72,6 +89,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("save"):
 		ResourceSaver.save(stack)
 		print(stack.commands)
+		return
+	elif event.is_action_pressed("pop_command_stack"):
+		pop()
 		return
 	
 	var input_text = event.as_text()

@@ -5,13 +5,22 @@ var tool := MeshDataTool.new()
 var surface_array = []
 var vertices: PackedVector3Array = []
 var indices: PackedInt32Array = []
-var edges: Dictionary = {}
 
 signal geometry_added
 
 func _ready() -> void:
+	build_initial_model()
+
+func build_initial_model():
+	# Reset all internal data
+	mesh.clear_surfaces()
+	tool.clear()
+	surface_array.clear()
+	vertices.clear()
+	indices.clear()
 	surface_array.resize(Mesh.ARRAY_MAX)
 	
+	# Data for the initial tetrahedron
 	vertices = [
 		Vector3(0, 0, 0),
 		Vector3(0, 0, 1),
@@ -32,14 +41,20 @@ func _ready() -> void:
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface_array)
 	tool.create_from_surface(mesh, 0)
 	
-	rebuild_surface()
+	generate_normals()
 
-func rebuild_surface():
-	mesh.clear_surfaces()
-	tool.commit_to_surface(mesh)
-
+func generate_normals():
 	var surface_mesh_tool := SurfaceTool.new()
 	surface_mesh_tool.create_from(mesh, 0)
 	surface_mesh_tool.generate_normals()
 	surface_mesh_tool.commit(mesh)
 	geometry_added.emit()
+
+func rebuild_surface_from_tool():
+	mesh.clear_surfaces()
+	tool.commit_to_surface(mesh)
+
+## Deletes the current surface, rebuilds it from the tool, and regens normals
+func refresh():
+	rebuild_surface_from_tool()
+	generate_normals()
