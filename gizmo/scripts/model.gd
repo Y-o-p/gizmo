@@ -50,11 +50,22 @@ func generate_normals():
 	surface_mesh_tool.commit(mesh)
 	geometry_added.emit()
 
+func rebuild_surface_from_arrays():
+	mesh.clear_surfaces()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface_array)
+	generate_normals()
+	tool.clear()
+	tool.create_from_surface(mesh, 0)
+
 func rebuild_surface_from_tool():
 	mesh.clear_surfaces()
 	tool.commit_to_surface(mesh)
-
-## Deletes the current surface, rebuilds it from the tool, and regens normals
-func refresh():
-	rebuild_surface_from_tool()
 	generate_normals()
+
+func find_face(search: PackedInt32Array):
+	for i in range(0, indices.size(), 3):
+		var face = indices.slice(i, i + 3)
+		if face == search:
+			return i
+	
+	return -1

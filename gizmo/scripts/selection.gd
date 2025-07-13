@@ -50,19 +50,31 @@ func get_selected_edge_vertices():
 func get_selected_vertex():
 	return get_selected_face_vertices()[(edge + vertex) % 3]
 
+func get_connected_face():
+	var edge_idx = model.tool.get_face_edge(face, edge)
+	var edge_faces = model.tool.get_edge_faces(edge_idx)
+	edge_faces.erase(face)
+	return edge_faces[0]
+
+func get_connected_face_vertices():
+	var connected_face = get_connected_face()
+	return [
+		model.tool.get_face_vertex(connected_face, 0),
+		model.tool.get_face_vertex(connected_face, 1),
+		model.tool.get_face_vertex(connected_face, 2),
+	]
+
 func move_selection():
 	match mode:
 		Mode.FACE:
-			var edge_idx = model.tool.get_face_edge(face, edge)
-			var edge_faces = model.tool.get_edge_faces(edge_idx)
-			edge_faces.erase(face)
+			var connected_face = get_connected_face()
 			var new_face_edge_indices = [
-				model.tool.get_face_edge(edge_faces[0], 0),
-				model.tool.get_face_edge(edge_faces[0], 1),
-				model.tool.get_face_edge(edge_faces[0], 2),
+				model.tool.get_face_edge(connected_face, 0),
+				model.tool.get_face_edge(connected_face, 1),
+				model.tool.get_face_edge(connected_face, 2),
 			]
-			edge = new_face_edge_indices.find(edge_idx)
-			face = edge_faces[0]
+			edge = new_face_edge_indices.find(model.tool.get_face_edge(face, edge))
+			face = connected_face
 			_emit_face_vertices()
 			_emit_edge_vertices()
 			_emit_vertex()

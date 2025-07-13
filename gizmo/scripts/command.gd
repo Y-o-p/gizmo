@@ -36,8 +36,7 @@ func vertex_mode():
 func move_selection():
 	selection.move_selection()
 
-func start_translate():
-	print("STARTED TRANSLATE")
+func translate():
 	return func(parameters: String):
 		var tokens: PackedStringArray = parameters.split(" ")
 		if tokens.size() < 3:
@@ -46,18 +45,79 @@ func start_translate():
 		if not (tokens[0].is_valid_float() and tokens[1].is_valid_float() and tokens[2].is_valid_float()):
 			return
 
-		translate(Vector3(tokens[0].to_float(), tokens[1].to_float(), tokens[2].to_float()))
+		_translate(Vector3(tokens[0].to_float(), tokens[1].to_float(), tokens[2].to_float()))
+
+func split():
+	return func(parameters: String):
+		if not parameters.is_valid_float():
+			return
+
+		_split(parameters.to_float())
+		
 
 ################################################################################
 
-func translate(delta: Vector3):
+func _split(amount: float):
+	if amount < 0.0 or amount > 1.0:
+		return
+	
+	# Delete the old faces
+	for indices in [selection.get_selected_face_vertices(), selection.get_connected_face_vertices()]:
+		var face_index = selection.model.find_face(indices)
+		if face_index == -1:
+			return
+		
+		for i in range(3):
+			selection.model.indices.remove_at(face_index)
+
+	# Get the first vertex and second vertex
+	var first_vertex = selection.get_selected_vertex()
+	var edge_vertices = selection.get_selected_edge_vertices()
+	edge_vertices.erase(first_vertex)
+	var second_vertex = edge_vertices[0]
+	
+	# Calculate the new vertex and add it
+	var new_vertex = amount * selection.model.tool.get_vertex(first_vertex) + (1.0 - amount) * selection.model.tool.get_vertex(second_vertex)
+	selection.model.vertices.append(new_vertex)
+	var new_vertex_idx = selection.model.vertices.size() - 1
+	
+	# Get the starting vertex of the quad
+	var selected_face_vertices = selection.get_selected_face_vertices()
+	selected_face_vertices.erase(first_vertex)
+	selected_face_vertices.erase(second_vertex)
+	var a = selected_face_vertices[0]
+	
+	# Get the second to last vertex of the quad
+	var connected_face_vertices = selection.get_connected_face_vertices()
+	connected_face_vertices.erase(first_vertex)
+	connected_face_vertices.erase(second_vertex)
+	var c = connected_face_vertices[0]
+	
+	# Create the quad
+	selected_face_vertices = selection.get_selected_face_vertices()
+	var start = selected_face_vertices.find(a)
+	var quad: PackedInt32Array = _wrapping_slice(selection.get_selected_face_vertices(), start, start + 3)
+	quad.insert(2, c)
+	
+	# Create 4 new faces
+	var new_faces := PackedInt32Array()
+	for edge_start in range(4):
+		new_faces.append(new_vertex_idx)
+		new_faces.append_array(_wrapping_slice(quad, edge_start, edge_start + 2))
+	
+	# Add the new faces and rebuild
+	
+	selection.model.indices.append_array(new_faces)
+	selection.model.rebuild_surface_from_arrays()
+
+func _translate(delta: Vector3):
 	for vertex in selection.get_selected_vertices():
 		selection.model.tool.set_vertex(
 			vertex,
 			selection.model.tool.get_vertex(vertex) + delta
 		)
 	
-	selection.model.refresh()
+	selection.model.rebuild_surface_from_tool()
 
 func pop():
 	stack.commands.remove_at(stack.commands.size() - 1)
@@ -88,7 +148,6 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("save"):
 		ResourceSaver.save(stack)
-		print(stack.commands)
 		return
 	elif event.is_action_pressed("pop_command_stack"):
 		pop()
@@ -115,3 +174,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	else:
 		command_completed.emit(callable.get_method())
 		stack.commands.append(callable.get_method())
+
+func _wrapping_slice(array: Variant, start: int, end: int):
+	var new_array = []
+	for offset in range(abs(end - start)):
+		new_array.append(array[(start + offset) % array.size()])
+	
+	return new_array

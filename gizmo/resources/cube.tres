@@ -4,4 +4,3 @@
 
 [resource]
 script = ExtResource("1_smso4")
-commands = PackedStringArray("face_mode", "move_selection", "edge_mode", "vertex_mode", "move_selection", "move_selection", "move_selection", "start_translate 1 0 0", "start_translate -2 0 0", "move_selection", "move_selection", "move_selection", "move_selection", "move_selection", "edge_mode", "move_selection", "move_selection", "face_mode", "move_selection", "face_mode")
