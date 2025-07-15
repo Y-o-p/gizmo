@@ -20,6 +20,13 @@ func load_command_stack(command_stack: CommandStack):
 		else:
 			print("Error: ", command)
 
+func export_model_as_gltf():
+	var gltf_document_save := GLTFDocument.new()
+	var gltf_state_save := GLTFState.new()
+	gltf_document_save.append_from_scene(selection.model, gltf_state_save)
+	var path = "user://gizmo_%d.gltf" % int(Time.get_unix_time_from_system())
+	gltf_document_save.write_to_filesystem(gltf_state_save, path)
+
 ################################################################################
 # Command functions
 ################################################################################
@@ -147,10 +154,14 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("save"):
-		ResourceSaver.save(stack)
+		var path = "user://gizmo_%d.tres" % int(Time.get_unix_time_from_system())
+		ResourceSaver.save(stack, path)
 		return
 	elif event.is_action_pressed("pop_command_stack"):
 		pop()
+		return
+	elif event.is_action_pressed("export"):
+		export_model_as_gltf()
 		return
 	
 	var input_text = event.as_text()
