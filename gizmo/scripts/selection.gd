@@ -106,3 +106,8 @@ func _emit_vertex():
 		model.tool.get_face_vertex(face, 2),
 	]
 	vertex_changed.emit(model.tool.get_vertex(indices[(edge + vertex) % 3]))
+
+func _ready():
+	call_deferred("_emit_face_vertices")
+	call_deferred("_emit_edge_vertices")
+	call_deferred("_emit_vertex")

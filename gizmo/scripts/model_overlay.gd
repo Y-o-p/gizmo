@@ -2,46 +2,45 @@ extends Node
 
 @export var selection: Selection
 
-func _ready() -> void:
-	selection.face_changed.connect(_on_face_changed)
-	selection.edge_changed.connect(_on_edge_changed)
-	selection.vertex_changed.connect(_on_vertex_changed)
-
-func _on_face_changed(a, b, c):
-	draw_face_selection(a, b, c)
+var _meshes = []
+func _process(delta: float) -> void:
+	for mesh in _meshes:
+		mesh.queue_free()
 	
-var _clear_face_selection: Callable = func(): pass
-func draw_face_selection(a, b, c):
-	_clear_face_selection.call()
+	_meshes.clear()
 
-	var line_a: MeshInstance3D = await Draw3D.line(a, b, Color.YELLOW)
-	var line_b: MeshInstance3D = await Draw3D.line(b, c, Color.YELLOW)
-	var line_c: MeshInstance3D = await Draw3D.line(c, a, Color.YELLOW)
-	
-	_clear_face_selection = func():
-		line_a.queue_free()
-		line_b.queue_free()
-		line_c.queue_free()
+	var face_vertices = selection.get_selected_face_vertices()
+	var edge_vertices = selection.get_selected_edge_vertices()
 
-func _on_edge_changed(a, b):
-	draw_edge_selection(a, b)
-
-var _clear_edge_selection: Callable = func(): pass
-func draw_edge_selection(a, b):
-	_clear_edge_selection.call()
-
+	# Draw the face lines
 	var normal: Vector3 = selection.model.tool.get_face_normal(selection.face)
-	var line_a: MeshInstance3D = await Draw3D.line(normal * 0.01 + a, normal * 0.01 + b, Color.ORANGE_RED)
-	_clear_edge_selection = func():
-		line_a.queue_free()
+	var normal_offset := normal * 0.001
+	for idx in range(len(face_vertices)):
+		var a = face_vertices[idx]
+		var b = face_vertices[(idx + 1) % len(face_vertices)]
+		if a in edge_vertices and b in edge_vertices:
+			continue
 
-func _on_vertex_changed(a):
-	draw_vertex_selection(a)
-
-var _clear_vertex_selection: Callable = func(): pass
-func draw_vertex_selection(a):
-	_clear_vertex_selection.call()
+		_meshes.append(await Draw3D.line(
+			normal_offset + selection.model.tool.get_vertex(a),
+			normal_offset + selection.model.tool.get_vertex(b),
+			Color("ac6b26")
+		))
 	
-	var point: MeshInstance3D = await Draw3D.point(a)
-	_clear_vertex_selection = func():
-		point.queue_free()
+	# Draw the edge line
+	_meshes.append(await Draw3D.line(
+		normal_offset + selection.model.tool.get_vertex(edge_vertices[0]),
+		normal_offset + selection.model.tool.get_vertex(edge_vertices[1]),
+		Color("f6cd26")#Color("cb4e32ff")
+	))
+
+	# Draw the point
+	var vertex = selection.get_selected_vertex()
+	_meshes.append(await Draw3D.point(selection.model.tool.get_vertex(vertex), 0.02, Color("f6cd26")))
+	
+func find_sequence(array: Array, sequence: Array) -> int:
+	for i in range(len(array)):
+		if array.slice(i, i + len(sequence)) == sequence:
+			return i
+	
+	return -1

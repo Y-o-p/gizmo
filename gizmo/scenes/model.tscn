@@ -6,17 +6,20 @@
 [ext_resource type="Script" uid="uid://dg6ak33eu1avv" path="res://scripts/model_overlay.gd" id="2_30clo"]
 [ext_resource type="Script" uid="uid://21b5m0wyjjr1" path="res://scripts/camera_3d.gd" id="2_d5leo"]
 
-[sub_resource type="ORMMaterial3D" id="ORMMaterial3D_l528w"]
-emission_enabled = true
-emission = Color(0.57, 0.57, 0.57, 1)
-grow_amount = -0.328
+[sub_resource type="Environment" id="Environment_rka1o"]
+background_mode = 1
+background_color = Color(0.1254902, 0.1254902, 0.1254902, 1)
+ambient_light_sky_contribution = 0.85
+volumetric_fog_sky_affect = 0.328
+
+[sub_resource type="ORMMaterial3D" id="ORMMaterial3D_yyhii"]
+shading_mode = 0
+albedo_color = Color(0.22352941, 0.22352941, 0.22352941, 1)
+proximity_fade_distance = 0.5
 stencil_flags = 2
+stencil_color = Color(0.1791046, 0.25311372, 0.37583062, 1)
 
 [sub_resource type="ArrayMesh" id="ArrayMesh_rka1o"]
-
-[sub_resource type="Environment" id="Environment_rka1o"]
-ambient_light_sky_contribution = 0.85
-volumetric_fog_enabled = true
 
 [node name="Model" type="Node3D"]
 
@@ -32,8 +35,11 @@ selection = NodePath("../Selection")
 script = ExtResource("1_30clo")
 model = NodePath("../Model")
 
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_rka1o")
+
 [node name="Model" type="MeshInstance3D" parent="."]
-material_override = SubResource("ORMMaterial3D_l528w")
+material_override = SubResource("ORMMaterial3D_yyhii")
 mesh = SubResource("ArrayMesh_rka1o")
 script = ExtResource("1_rka1o")
 
@@ -47,8 +53,5 @@ near = 0.001
 script = ExtResource("2_d5leo")
 selection = NodePath("../../Selection")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("Environment_rka1o")
-
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.7653534, 0.46334735, 0.44670272, -0.5773011, 0.18739267, 0.79473746, 0.28453064, -0.86613697, 0.4109125, 0, 0, 0)
+transform = Transform3D(0.99999994, 0, 0, 0, 0.99999994, 0, 0, 0, 0.9999999, 0, 0, 0)
