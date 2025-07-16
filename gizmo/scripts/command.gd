@@ -125,6 +125,7 @@ func _translate(delta: Vector3):
 		)
 	
 	selection.model.rebuild_surface_from_tool()
+	selection._emit_face_vertices()
 
 func pop():
 	stack.commands.remove_at(stack.commands.size() - 1)

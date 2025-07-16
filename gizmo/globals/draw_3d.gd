@@ -1,7 +1,7 @@
 # Source: https://github.com/Ryan-Mirch/Line-and-Sphere-Drawing/blob/main/Draw3D.gd
 extends Node
 
-func line(pos1: Vector3, pos2: Vector3, color = Color.WHITE_SMOKE, persist_ms = 0):
+func line(pos1: Vector3, pos2: Vector3, color = Color.WHITE_SMOKE, depth_test = true, persist_ms = 0):
 	var mesh_instance := MeshInstance3D.new()
 	var immediate_mesh := ImmediateMesh.new()
 	var material := ORMMaterial3D.new()
@@ -16,10 +16,11 @@ func line(pos1: Vector3, pos2: Vector3, color = Color.WHITE_SMOKE, persist_ms = 
 
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	material.albedo_color = color
+	material.no_depth_test = not depth_test
 
 	return await final_cleanup(mesh_instance, persist_ms)
 
-func point(pos: Vector3, radius = 0.05, color = Color.WHITE_SMOKE, persist_ms = 0):
+func point(pos: Vector3, radius = 0.05, color = Color.WHITE_SMOKE, depth_test = true, persist_ms = 0):
 	var mesh_instance := MeshInstance3D.new()
 	var sphere_mesh := SphereMesh.new()
 	var material := ORMMaterial3D.new()
@@ -34,6 +35,7 @@ func point(pos: Vector3, radius = 0.05, color = Color.WHITE_SMOKE, persist_ms = 
 
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	material.albedo_color = color
+	material.no_depth_test = not depth_test
 
 	return await final_cleanup(mesh_instance, persist_ms)
 

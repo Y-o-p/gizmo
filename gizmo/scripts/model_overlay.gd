@@ -13,8 +13,6 @@ func _process(delta: float) -> void:
 	var edge_vertices = selection.get_selected_edge_vertices()
 
 	# Draw the face lines
-	var normal: Vector3 = selection.model.tool.get_face_normal(selection.face)
-	var normal_offset := normal * 0.001
 	for idx in range(len(face_vertices)):
 		var a = face_vertices[idx]
 		var b = face_vertices[(idx + 1) % len(face_vertices)]
@@ -22,21 +20,23 @@ func _process(delta: float) -> void:
 			continue
 
 		_meshes.append(await Draw3D.line(
-			normal_offset + selection.model.tool.get_vertex(a),
-			normal_offset + selection.model.tool.get_vertex(b),
-			Color("ac6b26")
+			selection.model.tool.get_vertex(a),
+			selection.model.tool.get_vertex(b),
+			Color("ac6b26"),
+			false
 		))
 
 	# Draw the edge line
 	_meshes.append(await Draw3D.line(
-		normal_offset + selection.model.tool.get_vertex(edge_vertices[0]),
-		normal_offset + selection.model.tool.get_vertex(edge_vertices[1]),
-		Color("f6cd26")
+		selection.model.tool.get_vertex(edge_vertices[0]),
+		selection.model.tool.get_vertex(edge_vertices[1]),
+		Color("f6cd26"),
+		false
 	))
 
 	# Draw the point
 	var vertex = selection.get_selected_vertex()
-	_meshes.append(await Draw3D.point(selection.model.tool.get_vertex(vertex), 0.02, Color("f6cd26")))
+	_meshes.append(await Draw3D.point(selection.model.tool.get_vertex(vertex), 0.02, Color("f6cd26"), false))
 	
 func find_sequence(array: Array, sequence: Array) -> int:
 	for i in range(len(array)):

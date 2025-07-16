@@ -12,12 +12,10 @@ background_color = Color(0.1254902, 0.1254902, 0.1254902, 1)
 ambient_light_sky_contribution = 0.85
 volumetric_fog_sky_affect = 0.328
 
-[sub_resource type="ORMMaterial3D" id="ORMMaterial3D_yyhii"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yyhii"]
+cull_mode = 2
 shading_mode = 0
 albedo_color = Color(0.22352941, 0.22352941, 0.22352941, 1)
-proximity_fade_distance = 0.5
-stencil_flags = 2
-stencil_color = Color(0.1791046, 0.25311372, 0.37583062, 1)
 
 [sub_resource type="ArrayMesh" id="ArrayMesh_rka1o"]
 
@@ -39,7 +37,7 @@ model = NodePath("../Model")
 environment = SubResource("Environment_rka1o")
 
 [node name="Model" type="MeshInstance3D" parent="."]
-material_override = SubResource("ORMMaterial3D_yyhii")
+material_override = SubResource("StandardMaterial3D_yyhii")
 mesh = SubResource("ArrayMesh_rka1o")
 script = ExtResource("1_rka1o")
 
