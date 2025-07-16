@@ -26,12 +26,12 @@ func _process(delta: float) -> void:
 			normal_offset + selection.model.tool.get_vertex(b),
 			Color("ac6b26")
 		))
-	
+
 	# Draw the edge line
 	_meshes.append(await Draw3D.line(
 		normal_offset + selection.model.tool.get_vertex(edge_vertices[0]),
 		normal_offset + selection.model.tool.get_vertex(edge_vertices[1]),
-		Color("f6cd26")#Color("cb4e32ff")
+		Color("f6cd26")
 	))
 
 	# Draw the point

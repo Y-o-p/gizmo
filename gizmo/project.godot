@@ -26,7 +26,6 @@ Draw3D="*res://globals/draw_3d.gd"
 
 window/size/mode=3
 window/subwindows/embed_subwindows=false
-window/per_pixel_transparency/allowed=true
 
 [file_customization]
 
