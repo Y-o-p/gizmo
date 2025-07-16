@@ -59,7 +59,7 @@ func rebuild_wireframe():
 
 func rebuild_surface_from_arrays():
 	mesh.clear_surfaces()
-	generate_normals()
+	#generate_normals()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface_array)
 	tool.clear()
 	tool.create_from_surface(mesh, 0)
@@ -68,7 +68,7 @@ func rebuild_surface_from_arrays():
 
 func rebuild_surface_from_tool():
 	mesh.clear_surfaces()
-	generate_normals()
+	#generate_normals()
 	tool.commit_to_surface(mesh)
 	rebuild_wireframe()
 
