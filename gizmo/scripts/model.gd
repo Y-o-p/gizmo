@@ -34,7 +34,6 @@ func build_initial_model():
 
 func generate_normals():
 	var surface_mesh_tool := SurfaceTool.new()
-	print("SURFACE ARRAY: ", surface_array)
 	surface_mesh_tool.create_from_arrays(surface_array)
 	surface_mesh_tool.generate_normals()
 	surface_array = surface_mesh_tool.commit_to_arrays()
@@ -66,8 +65,9 @@ func rebuild_surface_from_arrays():
 
 func rebuild_surface_from_tool():
 	mesh.clear_surfaces()
-	#generate_normals()
 	tool.commit_to_surface(mesh)
+	surface_array = mesh.surface_get_arrays(0)
+	generate_normals()
 	rebuild_wireframe()
 
 

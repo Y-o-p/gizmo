@@ -95,6 +95,7 @@ func _split(amount: float):
 	
 	# Nullify the current normals
 	selection.model.surface_array[Mesh.ARRAY_NORMAL] = null
+	selection.model.surface_array[Mesh.ARRAY_TANGENT] = null
 	
 	# Get the starting vertex of the quad
 	var selected_face_vertices = selection.get_selected_face_vertices()
