@@ -12,6 +12,11 @@ var stack: CommandStack = preload("res://resources/cube.tres")
 @onready var KEY_TO_COMMAND: Dictionary = _get_event_to_command_dict()
 
 func load_command_stack(command_stack: CommandStack):
+	selection.face = 0
+	selection.edge = 0
+	selection.vertex = 0
+	selection.mode = Selection.Mode.FACE
+	selection.model.build_initial_model()
 	stack = command_stack
 	for command_str in stack.commands:
 		var command = stack.string_to_command(command_str)
@@ -75,7 +80,7 @@ func _split(amount: float):
 			return
 		
 		for i in range(3):
-			selection.model.indices.remove_at(face_index)
+			selection.model.surface_array[Mesh.ARRAY_INDEX].remove_at(face_index)
 
 	# Get the first vertex and second vertex
 	var first_vertex = selection.get_selected_vertex()
@@ -85,8 +90,11 @@ func _split(amount: float):
 	
 	# Calculate the new vertex and add it
 	var new_vertex = amount * selection.model.tool.get_vertex(first_vertex) + (1.0 - amount) * selection.model.tool.get_vertex(second_vertex)
-	selection.model.vertices.append(new_vertex)
-	var new_vertex_idx = selection.model.vertices.size() - 1
+	selection.model.surface_array[Mesh.ARRAY_VERTEX].append(new_vertex)
+	var new_vertex_idx = selection.model.surface_array[Mesh.ARRAY_VERTEX].size() - 1
+	
+	# Nullify the current normals
+	selection.model.surface_array[Mesh.ARRAY_NORMAL] = null
 	
 	# Get the starting vertex of the quad
 	var selected_face_vertices = selection.get_selected_face_vertices()
@@ -114,7 +122,7 @@ func _split(amount: float):
 	
 	# Add the new faces and rebuild
 	
-	selection.model.indices.append_array(new_faces)
+	selection.model.surface_array[Mesh.ARRAY_INDEX].append_array(new_faces)
 	selection.model.rebuild_surface_from_arrays()
 
 func _translate(delta: Vector3):
@@ -136,6 +144,21 @@ func pop():
 	selection.model.build_initial_model()
 	load_command_stack(stack)
 	commands_refreshed.emit(stack.commands)
+
+func _load():
+	var dialog = FileDialog.new()
+	dialog.visible = true
+	dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	dialog.access = FileDialog.ACCESS_FILESYSTEM
+	dialog.current_dir = ProjectSettings.globalize_path("user://")
+	dialog.add_filter("*.tres, *.res", "Resource")
+	var on_selected = func(file):
+		load_command_stack(load(file))
+		commands_refreshed.emit(stack.commands)
+	
+	dialog.file_selected.connect(on_selected)
+	get_tree().get_root().add_child(dialog)
+
 
 func _get_event_to_command_dict():
 	var event_to_command = {}
@@ -163,6 +186,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	elif event.is_action_pressed("export"):
 		export_model_as_gltf()
+		return
+	elif event.is_action_pressed("load"):
+		_load()
 		return
 	
 	var input_text = event.as_text()

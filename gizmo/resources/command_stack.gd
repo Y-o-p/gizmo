@@ -20,5 +20,6 @@ func string_to_command(str: String):
 			command.command_completed.emit(tokens[0])
 	elif tokens.size() == 2:
 		return func(command: Command):
+			print(tokens[0], tokens[1])
 			command.call(tokens[0]).call(tokens[1])
 			command.command_completed.emit("%s %s" % [tokens[0], tokens[1]])

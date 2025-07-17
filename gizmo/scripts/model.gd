@@ -3,8 +3,6 @@ class_name Model
 
 var tool := MeshDataTool.new()
 var surface_array = []
-var vertices: PackedVector3Array = []
-var indices: PackedInt32Array = []
 
 signal geometry_added
 
@@ -13,13 +11,13 @@ func _ready() -> void:
 
 func build_initial_model():
 	# Data for the initial tetrahedron
-	vertices = [
+	var vertices: PackedVector3Array = [
 		Vector3(0, 0, 0),
 		Vector3(0, 0, 1),
 		Vector3(0, 1, 0),
 		Vector3(1, 0, 0),
 	]
-	indices = [
+	var indices: PackedInt32Array = [
 		0, 2, 1,
 		0, 1, 3,
 		0, 3, 2,
@@ -31,12 +29,12 @@ func build_initial_model():
 	surface_array[Mesh.ARRAY_VERTEX] = vertices
 	surface_array[Mesh.ARRAY_INDEX] = indices
 	
-	call_deferred("rebuild_surface_from_arrays")
+	rebuild_surface_from_arrays()
 
 
 func generate_normals():
 	var surface_mesh_tool := SurfaceTool.new()
-	surface_mesh_tool.set_smooth_group(-1)
+	print("SURFACE ARRAY: ", surface_array)
 	surface_mesh_tool.create_from_arrays(surface_array)
 	surface_mesh_tool.generate_normals()
 	surface_array = surface_mesh_tool.commit_to_arrays()
@@ -59,7 +57,7 @@ func rebuild_wireframe():
 
 func rebuild_surface_from_arrays():
 	mesh.clear_surfaces()
-	#generate_normals()
+	generate_normals()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface_array)
 	tool.clear()
 	tool.create_from_surface(mesh, 0)
@@ -74,8 +72,8 @@ func rebuild_surface_from_tool():
 
 
 func find_face(search: PackedInt32Array):
-	for i in range(0, indices.size(), 3):
-		var face = indices.slice(i, i + 3)
+	for i in range(0, surface_array[Mesh.ARRAY_INDEX].size(), 3):
+		var face = surface_array[Mesh.ARRAY_INDEX].slice(i, i + 3)
 		if face == search:
 			return i
 	
