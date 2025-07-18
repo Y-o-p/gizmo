@@ -89,7 +89,7 @@ func _split(amount: float):
 	var second_vertex = edge_vertices[0]
 	
 	# Calculate the new vertex and add it
-	var new_vertex = amount * selection.model.tool.get_vertex(first_vertex) + (1.0 - amount) * selection.model.tool.get_vertex(second_vertex)
+	var new_vertex = (1.0 - amount) * selection.model.tool.get_vertex(first_vertex) + amount * selection.model.tool.get_vertex(second_vertex)
 	selection.model.surface_array[Mesh.ARRAY_VERTEX].append(new_vertex)
 	var new_vertex_idx = selection.model.surface_array[Mesh.ARRAY_VERTEX].size() - 1
 	
@@ -121,10 +121,17 @@ func _split(amount: float):
 		new_faces.append(new_vertex_idx)
 		new_faces.append_array(_wrapping_slice(quad, edge_start, edge_start + 2))
 	
-	# Add the new faces and rebuild
+	# Correct the selection
+	# The new face is either the first or last one depending on which vertex was selected
+	var first_or_last = 3 * selection.vertex
+	selection.face = selection.model.surface_array[Mesh.ARRAY_INDEX].size() / 3 + first_or_last
+	var new_selected_face_indices = new_faces.slice(3 * first_or_last, 3 * first_or_last + 3)
+	selection.edge = (new_selected_face_indices.find(first_vertex) - selection.vertex) % 3
 	
+	# Add the new faces and rebuild
 	selection.model.surface_array[Mesh.ARRAY_INDEX].append_array(new_faces)
 	selection.model.rebuild_surface_from_arrays()
+
 
 func _translate(delta: Vector3):
 	for vertex in selection.get_selected_vertices():
