@@ -2,6 +2,7 @@ extends Resource
 class_name CommandStack
 
 @export var commands: PackedStringArray
+@export var macros: Dictionary
 
 enum ParseError {
 	NO_TOKENS,

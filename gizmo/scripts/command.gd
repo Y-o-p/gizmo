@@ -8,8 +8,19 @@ signal commands_refreshed(commands: PackedStringArray)
 @export var selection: Selection
 
 var stack: CommandStack = preload("res://resources/cube.tres")
+var macro_recording = null
 
 @onready var KEY_TO_COMMAND: Dictionary = _get_event_to_command_dict()
+
+
+func run_command_strings(commands: PackedStringArray):
+	for command_str in commands:
+		var command = stack.string_to_command(command_str)
+		if command is Callable:
+			command.call(self)
+		else:
+			print("Error: ", command)
+
 
 func load_command_stack(command_stack: CommandStack):
 	selection.face = 0
@@ -18,12 +29,8 @@ func load_command_stack(command_stack: CommandStack):
 	selection.mode = Selection.Mode.FACE
 	selection.model.build_initial_model()
 	stack = command_stack
-	for command_str in stack.commands:
-		var command = stack.string_to_command(command_str)
-		if command is Callable:
-			command.call(self)
-		else:
-			print("Error: ", command)
+	run_command_strings(stack.commands)
+
 
 func export_model_as_gltf():
 	var gltf_document_save := GLTFDocument.new()
@@ -32,21 +39,27 @@ func export_model_as_gltf():
 	var path = "user://gizmo_%d.gltf" % int(Time.get_unix_time_from_system())
 	gltf_document_save.write_to_filesystem(gltf_state_save, path)
 
+
 ################################################################################
 # Command functions
 ################################################################################
 
+
 func face_mode():
 	selection.mode = Selection.Mode.FACE
 
+
 func edge_mode():
 	selection.mode = Selection.Mode.EDGE
-	
+
+
 func vertex_mode():
 	selection.mode = Selection.Mode.VERTEX
 
+
 func move_selection():
 	selection.move_selection()
+
 
 func translate():
 	return func(parameters: String):
@@ -59,6 +72,7 @@ func translate():
 
 		_translate(Vector3(tokens[0].to_float(), tokens[1].to_float(), tokens[2].to_float()))
 
+
 func split():
 	return func(parameters: String):
 		if not parameters.is_valid_float():
@@ -67,7 +81,17 @@ func split():
 		_split(parameters.to_float())
 		
 
+
+func run_macro():
+	return func(macro_name: String):
+		if not macro_name in stack.macros.keys():
+			return
+
+		run_command_strings(stack.macros[macro_name])
+
+
 ################################################################################
+
 
 func _split(amount: float):
 	if amount < 0.0 or amount > 1.0:
@@ -143,6 +167,7 @@ func _translate(delta: Vector3):
 	selection.model.rebuild_surface_from_tool()
 	selection._emit_face_vertices()
 
+
 func pop():
 	stack.commands.remove_at(stack.commands.size() - 1)
 	selection.face = 0
@@ -161,7 +186,14 @@ func _load():
 	dialog.current_dir = ProjectSettings.globalize_path("user://")
 	dialog.add_filter("*.tres, *.res", "Resource")
 	var on_selected = func(file):
-		load_command_stack(load(file))
+		var command_stack_or_macro = load(file)
+		if command_stack_or_macro is CommandStack:
+			load_command_stack(command_stack_or_macro)
+		elif command_stack_or_macro is Macro:
+			stack.macros[command_stack_or_macro.macro_name] = command_stack_or_macro.commands
+		else:
+			return
+			
 		commands_refreshed.emit(stack.commands)
 	
 	dialog.file_selected.connect(on_selected)
@@ -180,25 +212,42 @@ func _get_event_to_command_dict():
 
 	return event_to_command
 
+
 func _ready() -> void:
 	User.command = self
 	call_deferred("load_command_stack", stack)
 
+
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("save"):
+	if event.is_action_pressed("save_macros"):
+		for macro_name in stack.macros:
+			var macro := Macro.new()
+			macro.macro_name = macro_name
+			macro.commands = stack.macros[macro_name]
+			var path = "user://%s.tres" % macro_name
+			ResourceSaver.save(macro, path)
+	elif event.is_action_pressed("save"):
 		var path = "user://gizmo_%d.tres" % int(Time.get_unix_time_from_system())
 		ResourceSaver.save(stack, path)
-		return
 	elif event.is_action_pressed("pop_command_stack"):
 		pop()
-		return
 	elif event.is_action_pressed("export"):
 		export_model_as_gltf()
-		return
 	elif event.is_action_pressed("load"):
 		_load()
-		return
-	
+	elif event.is_action_pressed("macro"):
+		if macro_recording is PackedStringArray:
+			started_command.emit(func(macro_name: String):
+				stack.macros[macro_name] = macro_recording
+				macro_recording = null
+			)
+		elif macro_recording == null:
+			macro_recording = PackedStringArray([])
+	else:
+		_command_input(event)
+
+
+func _command_input(event: InputEvent):
 	var input_text = event.as_text()
 	if not KEY_TO_COMMAND.has(input_text):
 		return
@@ -207,6 +256,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not Input.is_action_just_pressed(callable.get_method()):
 		return
 	
+	# Macro recording
+		
+	
 	# Either the callable returns a new callable that takes in a string as input
 	# or it's a command that requires no parameters.
 	var maybe_callable = callable.call()
@@ -214,12 +266,18 @@ func _unhandled_input(event: InputEvent) -> void:
 		started_command.emit(func(parameters: String):
 			maybe_callable.call(parameters)
 			var command_as_string = "%s %s" % [callable.get_method(), parameters]
+			if macro_recording is PackedStringArray:
+				macro_recording.append(command_as_string)
 			command_completed.emit(command_as_string)
 			stack.commands.append(command_as_string)
 		)
 	else:
-		command_completed.emit(callable.get_method())
-		stack.commands.append(callable.get_method())
+		var method_name = callable.get_method()
+		if macro_recording is PackedStringArray:
+			macro_recording.append(method_name)
+		stack.commands.append(method_name)
+		command_completed.emit(method_name)
+
 
 func _wrapping_slice(array: Variant, start: int, end: int):
 	var new_array = []
