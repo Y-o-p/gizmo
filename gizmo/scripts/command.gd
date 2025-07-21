@@ -26,7 +26,6 @@ func load_command_stack(command_stack: CommandStack):
 	selection.face = 0
 	selection.edge = 0
 	selection.vertex = 0
-	selection.mode = Selection.Mode.FACE
 	selection.model.build_initial_model()
 	stack = command_stack
 	run_command_strings(stack.commands)
@@ -45,16 +44,16 @@ func export_model_as_gltf():
 ################################################################################
 
 
-func face_mode():
-	selection.mode = Selection.Mode.FACE
+func select_face():
+	selection.move_face_selection()
 
 
-func edge_mode():
-	selection.mode = Selection.Mode.EDGE
+func select_edge():
+	selection.move_edge_selection()
 
 
-func vertex_mode():
-	selection.mode = Selection.Mode.VERTEX
+func select_vertex():
+	selection.move_vertex_selection()
 
 
 func move_selection():
@@ -158,11 +157,11 @@ func _split(amount: float):
 
 
 func _translate(delta: Vector3):
-	for vertex in selection.get_selected_vertices():
-		selection.model.tool.set_vertex(
-			vertex,
-			selection.model.tool.get_vertex(vertex) + delta
-		)
+	var index = selection.get_selected_vertex()
+	selection.model.tool.set_vertex(
+		index,
+		selection.model.tool.get_vertex(index) + delta
+	)
 	
 	selection.model.rebuild_surface_from_tool()
 	selection._emit_face_vertices()
@@ -173,7 +172,6 @@ func pop():
 	selection.face = 0
 	selection.edge = 0
 	selection.vertex = 0
-	selection.mode = Selection.Mode.FACE
 	selection.model.build_initial_model()
 	load_command_stack(stack)
 	commands_refreshed.emit(stack.commands)
@@ -229,7 +227,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("save"):
 		var path = "user://gizmo_%d.tres" % int(Time.get_unix_time_from_system())
 		ResourceSaver.save(stack, path)
-	elif event.is_action_pressed("pop_command_stack"):
+	elif event.is_action_pressed("undo_command"):
 		pop()
 	elif event.is_action_pressed("export"):
 		export_model_as_gltf()
