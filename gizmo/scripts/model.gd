@@ -33,10 +33,31 @@ func build_initial_model():
 
 
 func generate_normals():
-	var surface_mesh_tool := SurfaceTool.new()
-	surface_mesh_tool.create_from_arrays(surface_array)
-	surface_mesh_tool.generate_normals()
-	surface_array = surface_mesh_tool.commit_to_arrays()
+	var number_of_vertices = surface_array[Mesh.ARRAY_VERTEX].size()
+	surface_array[Mesh.ARRAY_NORMAL] = PackedVector3Array([])
+	surface_array[Mesh.ARRAY_NORMAL].resize(number_of_vertices)
+	var index_to_face_count := PackedInt32Array([])
+	index_to_face_count.resize(number_of_vertices)
+	var index_to_normal_sum := PackedVector3Array([])
+	index_to_normal_sum.resize(number_of_vertices)
+	
+	var number_of_indices = surface_array[Mesh.ARRAY_INDEX].size()
+	for i in range(0, number_of_indices, 3):
+		var face = [
+			surface_array[Mesh.ARRAY_INDEX][i],
+			surface_array[Mesh.ARRAY_INDEX][i + 1],
+			surface_array[Mesh.ARRAY_INDEX][i + 2],
+		]
+		var a = surface_array[Mesh.ARRAY_VERTEX][face[0]]
+		var b = surface_array[Mesh.ARRAY_VERTEX][face[1]]
+		var c = surface_array[Mesh.ARRAY_VERTEX][face[2]]
+		var face_normal = (b - a).cross(c - a)
+		for index in face:
+			index_to_face_count[index] += 1
+			index_to_normal_sum[index] += face_normal
+	
+	for index in range(surface_array[Mesh.ARRAY_VERTEX].size()):
+		surface_array[Mesh.ARRAY_NORMAL][index] = index_to_normal_sum[index] / index_to_face_count[index]
 
 
 var _clear_wireframe: Callable = func(): pass
@@ -56,7 +77,7 @@ func rebuild_wireframe():
 
 func rebuild_surface_from_arrays():
 	mesh.clear_surfaces()
-	generate_normals()
+	#generate_normals()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface_array)
 	tool.clear()
 	tool.create_from_surface(mesh, 0)
@@ -65,10 +86,11 @@ func rebuild_surface_from_arrays():
 
 func rebuild_surface_from_tool():
 	mesh.clear_surfaces()
+	# NOTE: MetaDataTool doesn't have a commit_to_arrays() so I'm stuck doing this for now
 	tool.commit_to_surface(mesh)
 	surface_array = mesh.surface_get_arrays(0)
 	generate_normals()
-	rebuild_wireframe()
+	rebuild_surface_from_arrays()
 
 
 func find_face(search: PackedInt32Array):

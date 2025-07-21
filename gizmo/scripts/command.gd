@@ -116,7 +116,6 @@ func _split(amount: float):
 	var new_vertex = (1.0 - amount) * selection.model.tool.get_vertex(first_vertex) + amount * selection.model.tool.get_vertex(second_vertex)
 	selection.model.surface_array[Mesh.ARRAY_VERTEX].append(new_vertex)
 	var new_vertex_idx = selection.model.surface_array[Mesh.ARRAY_VERTEX].size() - 1
-	
 	# Nullify the current normals
 	selection.model.surface_array[Mesh.ARRAY_NORMAL] = null
 	selection.model.surface_array[Mesh.ARRAY_TANGENT] = null
@@ -154,6 +153,7 @@ func _split(amount: float):
 	
 	# Add the new faces and rebuild
 	selection.model.surface_array[Mesh.ARRAY_INDEX].append_array(new_faces)
+	print(selection.model.surface_array)
 	selection.model.rebuild_surface_from_arrays()
 
 
