@@ -25,6 +25,7 @@ func build_initial_model():
 	]
 
 	# Assign arrays to surface array.
+	surface_array.clear()
 	surface_array.resize(Mesh.ARRAY_MAX)
 	surface_array[Mesh.ARRAY_VERTEX] = vertices
 	surface_array[Mesh.ARRAY_INDEX] = indices
@@ -78,6 +79,7 @@ func rebuild_wireframe():
 func rebuild_surface_from_arrays():
 	mesh.clear_surfaces()
 	generate_normals()
+	print(surface_array)
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface_array)
 	tool.clear()
 	tool.create_from_surface(mesh, 0)

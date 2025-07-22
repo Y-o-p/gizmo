@@ -29,6 +29,8 @@ func load_command_stack(command_stack: CommandStack):
 	selection.model.build_initial_model()
 	stack = command_stack
 	run_command_strings(stack.commands)
+	for command_string in stack.commands:
+		command_completed.emit(command_string)
 
 
 func export_model_as_gltf():
@@ -152,7 +154,6 @@ func _split(amount: float):
 	
 	# Add the new faces and rebuild
 	selection.model.surface_array[Mesh.ARRAY_INDEX].append_array(new_faces)
-	print(selection.model.surface_array)
 	selection.model.rebuild_surface_from_arrays()
 
 
@@ -169,6 +170,8 @@ func _translate(delta: Vector3):
 
 func pop():
 	stack.commands.remove_at(stack.commands.size() - 1)
+	if macro_recording is PackedStringArray:
+		macro_recording.remove_at(macro_recording.size() - 1)
 	selection.face = 0
 	selection.edge = 0
 	selection.vertex = 0
@@ -253,10 +256,7 @@ func _command_input(event: InputEvent):
 	var callable: Callable = KEY_TO_COMMAND[input_text]
 	if not Input.is_action_just_pressed(callable.get_method()):
 		return
-	
-	# Macro recording
-		
-	
+
 	# Either the callable returns a new callable that takes in a string as input
 	# or it's a command that requires no parameters.
 	var maybe_callable = callable.call()
