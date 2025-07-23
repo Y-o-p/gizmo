@@ -78,6 +78,9 @@ func rebuild_wireframe():
 
 func rebuild_surface_from_arrays():
 	mesh.clear_surfaces()
+	# Nullify the current normals
+	surface_array[Mesh.ARRAY_NORMAL] = null
+	surface_array[Mesh.ARRAY_TANGENT] = null
 	generate_normals()
 	print(surface_array)
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface_array)

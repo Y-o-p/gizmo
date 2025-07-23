@@ -58,10 +58,6 @@ func select_vertex():
 	selection.move_vertex_selection()
 
 
-func move_selection():
-	selection.move_selection()
-
-
 func translate():
 	return func(parameters: String):
 		var tokens: PackedStringArray = parameters.split(" ")
@@ -81,6 +77,34 @@ func split():
 
 		_split(parameters.to_float())
 		
+
+func pull():
+	print(selection.get_selected_vertex(), " ", selection.get_selected_face_vertices())
+	# Create a new vertex on top of the currently selected vertex
+	var selected_vertex = selection.get_selected_vertex()
+	selection.model.surface_array[Mesh.ARRAY_VERTEX].push_back(selection.model.tool.get_vertex(selected_vertex))
+	var new_vertex_idx = selection.model.surface_array[Mesh.ARRAY_VERTEX].size() - 1
+	
+	# Connect the currently selected face to the new vertex
+	var index_to_replace = selection.face * 3 + selection.edge + selection.vertex
+	selection.model.surface_array[Mesh.ARRAY_INDEX][index_to_replace] = new_vertex_idx
+	
+	# Create the side faces
+	var index_array_size = selection.model.surface_array[Mesh.ARRAY_INDEX].size()
+	selection.model.surface_array[Mesh.ARRAY_INDEX].resize(index_array_size + 6)
+	
+	var face_vertices = selection.get_selected_face_vertices()
+	face_vertices.erase(selected_vertex)
+	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size] = new_vertex_idx
+	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 1] = selected_vertex
+	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 2] = face_vertices[0]
+	
+	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 3] = new_vertex_idx
+	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 4] = face_vertices[1]
+	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 5] = selected_vertex
+	
+	# Rebuild the model
+	selection.model.rebuild_surface_from_arrays()
 
 
 func run_macro():
