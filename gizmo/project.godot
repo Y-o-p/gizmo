@@ -21,6 +21,7 @@ config/features=PackedStringArray("4.5", "Forward Plus")
 User="*res://globals/user.gd"
 Scenes="*res://globals/scenes.gd"
 Draw3D="*res://globals/draw_3d.gd"
+Macros="*res://scripts/macros.gd"
 
 [display]
 

@@ -109,10 +109,15 @@ func pull():
 
 func run_macro():
 	return func(macro_name: String):
-		if not macro_name in stack.macros.keys():
+		var macro
+		if macro_name in Macros.STANDARD_MACROS.keys():
+			macro = Macros.STANDARD_MACROS[macro_name]
+		elif macro_name in stack.macros.keys():
+			macro = stack.macros[macro_name]
+		else:
 			return
 
-		run_command_strings(stack.macros[macro_name])
+		run_command_strings(macro)
 
 
 ################################################################################

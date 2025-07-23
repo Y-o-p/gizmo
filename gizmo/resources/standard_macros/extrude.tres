@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="Macro" load_steps=2 format=3 uid="uid://cbrswd4nskdb8"]
+
+[ext_resource type="Script" uid="uid://bfvcv038xt21f" path="res://resources/macro.gd" id="1_n2pt7"]
+
+[resource]
+script = ExtResource("1_n2pt7")
+macro_name = "extrude"
+commands = PackedStringArray("pull", "select_edge", "pull", "select_edge", "pull", "select_edge")
