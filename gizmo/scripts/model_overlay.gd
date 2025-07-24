@@ -19,7 +19,7 @@ func _process(delta: float) -> void:
 		if a in edge_vertices and b in edge_vertices:
 			continue
 
-		_meshes.append(await Draw3D.line(
+		_meshes.append(Draw3D.line(
 			selection.model.tool.get_vertex(a),
 			selection.model.tool.get_vertex(b),
 			Color("ac6b26"),
@@ -27,7 +27,7 @@ func _process(delta: float) -> void:
 		))
 
 	# Draw the edge line
-	_meshes.append(await Draw3D.line(
+	_meshes.append(Draw3D.line(
 		selection.model.tool.get_vertex(edge_vertices[0]),
 		selection.model.tool.get_vertex(edge_vertices[1]),
 		Color("f6cd26"),
@@ -36,7 +36,10 @@ func _process(delta: float) -> void:
 
 	# Draw the point
 	var vertex = selection.get_selected_vertex()
-	_meshes.append(await Draw3D.point(selection.model.tool.get_vertex(vertex), 0.02, Color("f6cd26"), false))
+	_meshes.append(Draw3D.point(selection.model.tool.get_vertex(vertex), 0.02, Color("f6cd26"), false))
+	
+	for mesh in _meshes:
+		add_child(mesh)
 	
 func find_sequence(array: Array, sequence: Array) -> int:
 	for i in range(len(array)):

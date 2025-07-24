@@ -69,7 +69,8 @@ func rebuild_wireframe():
 	for edge_idx in range(tool.get_edge_count()):
 		var a = tool.get_vertex(tool.get_edge_vertex(edge_idx, 0))
 		var b = tool.get_vertex(tool.get_edge_vertex(edge_idx, 1))
-		lines_to_clear.append(await Draw3D.line(a, b, Color("#725956")))
+		lines_to_clear.append(Draw3D.line(a, b, Color("#725956")))
+		add_child(lines_to_clear.back())
 	
 	_clear_wireframe = func():
 		for line in lines_to_clear:

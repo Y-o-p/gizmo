@@ -1,10 +1,11 @@
-[gd_scene load_steps=9 format=3 uid="uid://cc6ht2rvnq6x2"]
+[gd_scene load_steps=10 format=3 uid="uid://cc6ht2rvnq6x2"]
 
 [ext_resource type="Script" uid="uid://b6wtute28vynl" path="res://scripts/selection.gd" id="1_30clo"]
 [ext_resource type="Script" uid="uid://bbmlrtiumh7yc" path="res://scripts/model.gd" id="1_rka1o"]
 [ext_resource type="Script" uid="uid://bgqy5n4t8ih30" path="res://scripts/command.gd" id="1_yyhii"]
 [ext_resource type="Script" uid="uid://dg6ak33eu1avv" path="res://scripts/model_overlay.gd" id="2_30clo"]
 [ext_resource type="Script" uid="uid://21b5m0wyjjr1" path="res://scripts/camera_3d.gd" id="2_d5leo"]
+[ext_resource type="Script" uid="uid://bjakpnm48wdg7" path="res://scripts/axes.gd" id="6_jpifx"]
 
 [sub_resource type="Environment" id="Environment_rka1o"]
 background_mode = 1
@@ -35,6 +36,10 @@ model = NodePath("../Model")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_rka1o")
+
+[node name="Axes" type="Node2D" parent="."]
+z_index = 160
+script = ExtResource("6_jpifx")
 
 [node name="Model" type="MeshInstance3D" parent="."]
 material_override = SubResource("StandardMaterial3D_yyhii")
