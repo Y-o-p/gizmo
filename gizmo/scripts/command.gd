@@ -46,15 +46,15 @@ func export_model_as_gltf():
 ################################################################################
 
 
-func select_face():
+func move_face_selection():
 	selection.move_face_selection()
 
 
-func select_edge():
+func move_edge_selection():
 	selection.move_edge_selection()
 
 
-func select_vertex():
+func move_vertex_selection():
 	selection.move_vertex_selection()
 
 
