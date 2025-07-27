@@ -18,6 +18,12 @@ func _on_command_started(parameter_callback: Callable):
 		edit.queue_free()
 		parameter_callback.call(parameters)
 	)
+	edit.editing_toggled.connect(func(editing: bool):
+		if editing:
+			return
+		
+		edit.queue_free()
+	)
 
 func _on_commands_refreshed(stack: PackedStringArray):
 	for child in get_children():

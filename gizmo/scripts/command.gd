@@ -4,6 +4,7 @@ class_name Command
 signal started_command(param_callback: Callable)
 signal command_completed(command_as_string: String)
 signal commands_refreshed(commands: PackedStringArray)
+signal invalid_command(error: String)
 
 @export var selection: Selection
 
@@ -75,10 +76,10 @@ func translate():
 	return func(parameters: String):
 		var tokens: PackedStringArray = parameters.split(" ")
 		if tokens.size() < 3:
-			return
+			return "Must have at least 3 values separated by spaces"
 		
 		if not (tokens[0].is_valid_float() and tokens[1].is_valid_float() and tokens[2].is_valid_float()):
-			return
+			return "All values must be floats"
 
 		_translate(Vector3(tokens[0].to_float(), tokens[1].to_float(), tokens[2].to_float()))
 
@@ -86,13 +87,12 @@ func translate():
 func split():
 	return func(parameters: String):
 		if not parameters.is_valid_float():
-			return
+			return "Not a valid float"
 
 		_split(parameters.to_float())
-		
+
 
 func pull():
-	print(selection.get_selected_vertex(), " ", selection.get_selected_face_vertices())
 	# Create a new vertex on top of the currently selected vertex
 	var selected_vertex = selection.get_selected_vertex()
 	selection.model.surface_array[Mesh.ARRAY_VERTEX].push_back(selection.model.tool.get_vertex(selected_vertex))
@@ -128,7 +128,7 @@ func run_macro():
 		elif macro_name in stack.macros.keys():
 			macro = stack.macros[macro_name]
 		else:
-			return
+			return "Macro doesn't exist"
 
 		run_command_strings(macro)
 
@@ -138,13 +138,13 @@ func run_macro():
 
 func _split(amount: float):
 	if amount < 0.0 or amount > 1.0:
-		return
-	
+		return "Amount must be between 0.0 and 1.0"
+
 	# Delete the old faces
 	for indices in [selection.get_selected_face_vertices(), selection.get_connected_face_vertices()]:
 		var face_index = selection.model.find_face(indices)
 		if face_index == -1:
-			return
+			return "Face no longer exists"
 		
 		for i in range(3):
 			selection.model.surface_array[Mesh.ARRAY_INDEX].remove_at(face_index)
@@ -311,7 +311,11 @@ func _command_input(event: InputEvent):
 	var maybe_callable = callable.call()
 	if maybe_callable is Callable:
 		started_command.emit(func(parameters: String):
-			maybe_callable.call(parameters)
+			var result = maybe_callable.call(parameters)
+			if result is String:
+				invalid_command.emit(result)
+				return
+			
 			var command_as_string = "%s %s" % [callable.get_method(), parameters]
 			if macro_recording is PackedStringArray:
 				macro_recording.append(command_as_string)
