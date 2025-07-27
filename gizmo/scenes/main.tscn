@@ -9,20 +9,35 @@
 [node name="Model" parent="." instance=ExtResource("2_0xm2m")]
 
 [node name="GUI" type="CanvasLayer" parent="."]
-script = ExtResource("2_sugp2")
 
 [node name="MarginContainer" type="MarginContainer" parent="GUI"]
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -23.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+script = ExtResource("2_sugp2")
+
+[node name="CommandGraph" type="Window" parent="."]
+oversampling_override = 1.0
+position = Vector2i(0, 36)
+
+[node name="MarginContainer" type="MarginContainer" parent="CommandGraph"]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -10.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="CommandStackContainer" type="VBoxContainer" parent="GUI/MarginContainer"]
+[node name="CommandStackContainer" type="VBoxContainer" parent="CommandGraph/MarginContainer"]
 layout_mode = 2
 script = ExtResource("2_0wfyh")
