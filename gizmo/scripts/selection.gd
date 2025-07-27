@@ -6,6 +6,7 @@ class_name Selection
 var face := 0
 var edge := 0
 var vertex := 0
+var selected_vertices := PackedInt32Array([])
 
 signal face_changed(a: Vector3, b: Vector3, c: Vector3)
 signal edge_changed(a: Vector3, b: Vector3)

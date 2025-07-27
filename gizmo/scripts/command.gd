@@ -58,6 +58,19 @@ func move_vertex_selection():
 	selection.move_vertex_selection()
 
 
+func select_vertex():
+	var vertex = selection.get_selected_vertex()
+	if vertex in selection.selected_vertices:
+		selection.selected_vertices.erase(vertex)
+	else:
+		selection.selected_vertices.push_back(vertex)
+		
+	
+
+func clear_selected_vertices():
+	selection.selected_vertices.clear()
+
+
 func translate():
 	return func(parameters: String):
 		var tokens: PackedStringArray = parameters.split(" ")
@@ -187,11 +200,18 @@ func _split(amount: float):
 
 
 func _translate(delta: Vector3):
-	var index = selection.get_selected_vertex()
-	selection.model.tool.set_vertex(
-		index,
-		selection.model.tool.get_vertex(index) + delta
-	)
+	if selection.selected_vertices.is_empty():
+		var index = selection.get_selected_vertex()
+		selection.model.tool.set_vertex(
+			index,
+			selection.model.tool.get_vertex(index) + delta
+		)
+	else:
+		for index in selection.selected_vertices:
+			selection.model.tool.set_vertex(
+				index,
+				selection.model.tool.get_vertex(index) + delta
+			)
 	
 	selection.model.rebuild_surface_from_tool()
 	selection._emit_face_vertices()

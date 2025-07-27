@@ -4,6 +4,9 @@ extends Node
 
 var _meshes = []
 func _process(delta: float) -> void:
+	if Engine.get_process_frames() % 5 != 0:
+		return
+	
 	for mesh in _meshes:
 		mesh.queue_free()
 	
@@ -37,6 +40,10 @@ func _process(delta: float) -> void:
 	# Draw the point
 	var vertex = selection.get_selected_vertex()
 	_meshes.append(Draw3D.point(selection.model.tool.get_vertex(vertex), 0.02, Color("f6cd26"), false))
+	
+	# Draw all selected vertices
+	for selected_vertex in selection.selected_vertices:
+		_meshes.append(Draw3D.point(selection.model.tool.get_vertex(selected_vertex), 0.02, Color("725956")))
 	
 	for mesh in _meshes:
 		add_child(mesh)
