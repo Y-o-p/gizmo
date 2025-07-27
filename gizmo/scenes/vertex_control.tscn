@@ -1,8 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://bo6wu4fi8hwcy"]
-
-[ext_resource type="Script" uid="uid://b33ee4v56s6mx" path="res://scripts/vertex_control.gd" id="1_edmbn"]
-
-[node name="VertexControl" type="Button"]
-offset_right = 8.0
-offset_bottom = 8.0
-script = ExtResource("1_edmbn")
