@@ -1,37 +1,61 @@
 extends Node
 class_name Command
 
-signal started_command(param_callback: Callable)
-signal command_completed(command_as_string: String)
-signal commands_refreshed(commands: PackedStringArray)
+signal started_command(param_callback: Callable, arg_types: Array)
+signal command_completed(command_idx: int)
+signal commands_refreshed
 signal invalid_command(error: String)
 
 @export var selection: Selection
 
 var stack: CommandStack = preload("res://resources/cube.tres")
+var commands: Array = []
 var macro_recording = null
 
 @onready var KEY_TO_COMMAND: Dictionary = _get_event_to_command_dict()
 
 
-func run_command_strings(commands: PackedStringArray):
-	for command_str in commands:
-		var command = stack.string_to_command(command_str)
-		if command is Callable:
-			command.call(self)
-		else:
-			print("Error: ", command)
+func interpret_command_resource(command_resource: CommandStack.CommandResource):
+	if not KEY_TO_COMMAND.has(command_resource.function_name):
+		return "Command doesn't exist"
+	
+	return KEY_TO_COMMAND[command_resource.function_name].bindv(command_resource.arguments)
+
+
+func interpret_command_resources(command_strings: Array[CommandStack.CommandResource]) -> Array:
+	var result = []
+	for command in command_strings:
+		result.push_back(interpret_command_resource(command))
+	
+	return result
+
+
+func call_commands_thus_far():
+	for command in commands:
+		if command is String:
+			break
+		elif command is Callable:
+			if not command.is_valid():
+				break
+			
+			if command.call() is String:
+				break
 
 
 func load_command_stack(command_stack: CommandStack):
+	reset()
+	stack = command_stack
+	
+	commands = interpret_command_resources(command_stack.commands)
+	call_commands_thus_far()
+	commands_refreshed.emit()
+
+
+func reset():
 	selection.face = 0
 	selection.edge = 0
 	selection.vertex = 0
 	selection.model.build_initial_model()
-	stack = command_stack
-	run_command_strings(stack.commands)
-	for command_string in stack.commands:
-		command_completed.emit(command_string)
 
 
 func export_model_as_gltf():
@@ -65,78 +89,39 @@ func select_vertex():
 		selection.selected_vertices.erase(vertex)
 	else:
 		selection.selected_vertices.push_back(vertex)
-		
-	
+
 
 func clear_selected_vertices():
 	selection.selected_vertices.clear()
 
 
-func translate():
-	return func(parameters: String):
-		var tokens: PackedStringArray = parameters.split(" ")
-		if tokens.size() < 3:
-			return "Must have at least 3 values separated by spaces"
-		
-		if not (tokens[0].is_valid_float() and tokens[1].is_valid_float() and tokens[2].is_valid_float()):
-			return "All values must be floats"
-
-		_translate(Vector3(tokens[0].to_float(), tokens[1].to_float(), tokens[2].to_float()))
+func translate_arg_types() -> Array:
+	return [typeof(Vector3())]
 
 
-func split():
-	return func(parameters: String):
-		if not parameters.is_valid_float():
-			return "Not a valid float"
-
-		_split(parameters.to_float())
-
-
-func pull():
-	# Create a new vertex on top of the currently selected vertex
-	var selected_vertex = selection.get_selected_vertex()
-	selection.model.surface_array[Mesh.ARRAY_VERTEX].push_back(selection.model.tool.get_vertex(selected_vertex))
-	var new_vertex_idx = selection.model.surface_array[Mesh.ARRAY_VERTEX].size() - 1
+func translate(delta: Vector3):
+	if selection.selected_vertices.is_empty():
+		var index = selection.get_selected_vertex()
+		selection.model.tool.set_vertex(
+			index,
+			selection.model.tool.get_vertex(index) + delta
+		)
+	else:
+		for index in selection.selected_vertices:
+			selection.model.tool.set_vertex(
+				index,
+				selection.model.tool.get_vertex(index) + delta
+			)
 	
-	# Connect the currently selected face to the new vertex
-	var index_to_replace = selection.face * 3 + selection.edge + selection.vertex
-	selection.model.surface_array[Mesh.ARRAY_INDEX][index_to_replace] = new_vertex_idx
-	
-	# Create the side faces
-	var index_array_size = selection.model.surface_array[Mesh.ARRAY_INDEX].size()
-	selection.model.surface_array[Mesh.ARRAY_INDEX].resize(index_array_size + 6)
-	
-	var face_vertices = selection.get_selected_face_vertices()
-	face_vertices.erase(selected_vertex)
-	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size] = new_vertex_idx
-	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 1] = selected_vertex
-	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 2] = face_vertices[0]
-	
-	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 3] = new_vertex_idx
-	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 4] = face_vertices[1]
-	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 5] = selected_vertex
-	
-	# Rebuild the model
-	selection.model.rebuild_surface_from_arrays()
+	selection.model.rebuild_surface_from_tool()
+	selection._emit_face_vertices()
 
 
-func run_macro():
-	return func(macro_name: String):
-		var macro
-		if macro_name in Macros.STANDARD_MACROS.keys():
-			macro = Macros.STANDARD_MACROS[macro_name]
-		elif macro_name in stack.macros.keys():
-			macro = stack.macros[macro_name]
-		else:
-			return "Macro doesn't exist"
-
-		run_command_strings(macro)
+func split_arg_types() -> Array:
+	return [typeof(float())]
 
 
-################################################################################
-
-
-func _split(amount: float):
+func split(amount: float):
 	if amount < 0.0 or amount > 1.0:
 		return "Amount must be between 0.0 and 1.0"
 
@@ -154,7 +139,7 @@ func _split(amount: float):
 	var edge_vertices = selection.get_selected_edge_vertices()
 	edge_vertices.erase(first_vertex)
 	var second_vertex = edge_vertices[0]
-	
+
 	# Calculate the new vertex and add it
 	var new_vertex = (1.0 - amount) * selection.model.tool.get_vertex(first_vertex) + amount * selection.model.tool.get_vertex(second_vertex)
 	selection.model.surface_array[Mesh.ARRAY_VERTEX].append(new_vertex)
@@ -199,34 +184,58 @@ func _split(amount: float):
 	selection.model.rebuild_surface_from_arrays()
 
 
-func _translate(delta: Vector3):
-	if selection.selected_vertices.is_empty():
-		var index = selection.get_selected_vertex()
-		selection.model.tool.set_vertex(
-			index,
-			selection.model.tool.get_vertex(index) + delta
-		)
-	else:
-		for index in selection.selected_vertices:
-			selection.model.tool.set_vertex(
-				index,
-				selection.model.tool.get_vertex(index) + delta
-			)
+func pull():
+	# Create a new vertex on top of the currently selected vertex
+	var selected_vertex = selection.get_selected_vertex()
+	selection.model.surface_array[Mesh.ARRAY_VERTEX].push_back(selection.model.tool.get_vertex(selected_vertex))
+	var new_vertex_idx = selection.model.surface_array[Mesh.ARRAY_VERTEX].size() - 1
 	
-	selection.model.rebuild_surface_from_tool()
-	selection._emit_face_vertices()
+	# Connect the currently selected face to the new vertex
+	var index_to_replace = selection.face * 3 + selection.edge + selection.vertex
+	selection.model.surface_array[Mesh.ARRAY_INDEX][index_to_replace] = new_vertex_idx
+	
+	# Create the side faces
+	var index_array_size = selection.model.surface_array[Mesh.ARRAY_INDEX].size()
+	selection.model.surface_array[Mesh.ARRAY_INDEX].resize(index_array_size + 6)
+	
+	var face_vertices = selection.get_selected_face_vertices()
+	face_vertices.erase(selected_vertex)
+	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size] = new_vertex_idx
+	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 1] = selected_vertex
+	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 2] = face_vertices[0]
+	
+	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 3] = new_vertex_idx
+	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 4] = face_vertices[1]
+	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 5] = selected_vertex
+	
+	# Rebuild the model
+	selection.model.rebuild_surface_from_arrays()
+
+
+func run_macro():
+	return func(macro_name: String):
+		var macro
+		if macro_name in Macros.STANDARD_MACROS.keys():
+			macro = Macros.STANDARD_MACROS[macro_name]
+		elif macro_name in stack.macros.keys():
+			macro = stack.macros[macro_name]
+		else:
+			return "Macro doesn't exist"
+
+
+################################################################################
 
 
 func pop():
+	commands.pop_back()
 	stack.commands.remove_at(stack.commands.size() - 1)
 	if macro_recording is PackedStringArray:
 		macro_recording.remove_at(macro_recording.size() - 1)
-	selection.face = 0
-	selection.edge = 0
-	selection.vertex = 0
-	selection.model.build_initial_model()
-	load_command_stack(stack)
-	commands_refreshed.emit(stack.commands)
+
+	reset()
+	call_commands_thus_far()
+	commands_refreshed.emit()
+
 
 func _load():
 	var dialog = FileDialog.new()
@@ -244,7 +253,7 @@ func _load():
 		else:
 			return
 			
-		commands_refreshed.emit(stack.commands)
+		commands_refreshed.emit()
 	
 	dialog.file_selected.connect(on_selected)
 	get_tree().get_root().add_child(dialog)
@@ -303,31 +312,33 @@ func _command_input(event: InputEvent):
 		return
 	
 	var callable: Callable = KEY_TO_COMMAND[input_text]
-	if not Input.is_action_just_pressed(callable.get_method()):
+	var command_name = callable.get_method()
+	if not Input.is_action_just_pressed(command_name):
 		return
 
-	# Either the callable returns a new callable that takes in a string as input
-	# or it's a command that requires no parameters.
-	var maybe_callable = callable.call()
-	if maybe_callable is Callable:
-		started_command.emit(func(parameters: String):
-			var result = maybe_callable.call(parameters)
-			if result is String:
-				invalid_command.emit(result)
-				return
-			
-			var command_as_string = "%s %s" % [callable.get_method(), parameters]
-			if macro_recording is PackedStringArray:
-				macro_recording.append(command_as_string)
-			command_completed.emit(command_as_string)
-			stack.commands.append(command_as_string)
+	if callable.get_argument_count() > 0:
+		started_command.emit(
+			func(parameters: Array):
+				callable = callable.bindv(parameters)
+				var result = callable.call()
+				if result is String:
+					invalid_command.emit(result)
+					return
+				
+				#if macro_recording is PackedStringArray:
+					#macro_recording.append(command_as_string)
+				stack.commands.append(CommandStack.CommandResource.from_callable(callable))
+				commands.append(callable)
+				command_completed.emit(commands.size() - 1),
+			self.call(command_name + "_arg_types")
 		)
 	else:
-		var method_name = callable.get_method()
+		callable.call()
 		if macro_recording is PackedStringArray:
-			macro_recording.append(method_name)
-		stack.commands.append(method_name)
-		command_completed.emit(method_name)
+			macro_recording.append(command_name)
+		stack.commands.append(CommandStack.CommandResource.from_callable(callable))
+		commands.append(callable)
+		command_completed.emit(commands.size() - 1)
 
 
 func _wrapping_slice(array: Variant, start: int, end: int):

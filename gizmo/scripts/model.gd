@@ -83,7 +83,6 @@ func rebuild_surface_from_arrays():
 	surface_array[Mesh.ARRAY_NORMAL] = null
 	surface_array[Mesh.ARRAY_TANGENT] = null
 	generate_normals()
-	print(surface_array)
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface_array)
 	tool.clear()
 	tool.create_from_surface(mesh, 0)
