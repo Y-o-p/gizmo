@@ -44,17 +44,14 @@ func construct_command_node(command_idx: int):
 			arg_name.text = "Amount"
 			container.add_child(arg_name)
 			
-			var arg_value := LineEdit.new()
-			arg_value.text = str(argument)
-			arg_value.text_changed.connect(func(text: String):
-				if !text.is_valid_float():
-					return
-
-				User.command.commands[command_idx] = Callable(User.command, command.get_method()).bind(text.to_float())
+			var float_edit := ValueEdit.new(argument)
+			float_edit.value_changed.connect(func (new_float: float):
+				print("NEW FLOAT: %f" % new_float)
+				User.command.commands[command_idx] = Callable(User.command, command.get_method()).bind(new_float)
 				User.command.reset()
 				User.command.call_commands_thus_far()
 			)
-			container.add_child(arg_value)
+			container.add_child(float_edit)
 			vbox_container.add_child(container)
 	
 	return panel_container
