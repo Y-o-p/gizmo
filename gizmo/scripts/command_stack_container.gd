@@ -37,21 +37,37 @@ func construct_command_node(command_idx: int):
 	vbox_container.add_child(label)
 	
 	for argument in command.get_bound_arguments():
+		var container := HBoxContainer.new()
 		if argument is float:
-			var container := HBoxContainer.new()
-			
 			var arg_name := Label.new()
 			arg_name.text = "Amount"
 			container.add_child(arg_name)
 			
 			var float_edit := ValueEdit.new(argument)
 			float_edit.value_changed.connect(func (new_float: float):
-				print("NEW FLOAT: %f" % new_float)
 				User.command.commands[command_idx] = Callable(User.command, command.get_method()).bind(new_float)
 				User.command.reset()
 				User.command.call_commands_thus_far()
 			)
 			container.add_child(float_edit)
-			vbox_container.add_child(container)
-	
+		elif argument is Vector3:
+			var args: Array = ["Δx", "Δy", "Δz"]
+			
+			for i in range(args.size()):
+				var arg_name := Label.new()
+				arg_name.text = args[i]
+				container.add_child(arg_name)
+			
+				var float_edit := ValueEdit.new(argument[i])
+				float_edit.value_changed.connect(func (new_float: float):
+					var current_vector: Vector3 = User.command.commands[command_idx].get_bound_arguments()[0]
+					current_vector[i] = new_float
+					User.command.commands[command_idx] = Callable(User.command, command.get_method()).bind(current_vector)
+					User.command.reset()
+					User.command.call_commands_thus_far()
+				)
+				container.add_child(float_edit)
+
+		vbox_container.add_child(container)
+
 	return panel_container

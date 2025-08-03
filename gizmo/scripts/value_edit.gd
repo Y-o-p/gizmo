@@ -31,6 +31,6 @@ func _init(initial_value: Variant) -> void:
 	self.editing_toggled.connect(func(editing: bool):
 		if editing:
 			return
-		print("EXITED")
+
 		text = value_to_string.call(value)
 	)
