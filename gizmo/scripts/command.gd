@@ -10,7 +10,9 @@ signal invalid_command(error: String)
 
 var stack: CommandStack = preload("res://resources/cube.tres")
 var commands: Array = []
-var finish_line: int = 1
+var finish_line: int = 0:
+	set(val):
+		finish_line = clamp(val, 0, commands.size())
 var macro_recording = null
 
 @onready var KEY_TO_COMMAND: Dictionary = _get_event_to_command_dict()
@@ -42,8 +44,8 @@ func call_commands_thus_far():
 			if command.call() is String:
 				break
 	
-	finish_line = max(1, min(finish_line, commands.size()))
-	print(finish_line)
+	# Properties be like: nothing to see here <:^)
+	finish_line = finish_line
 
 
 func load_command_stack(command_stack: CommandStack):
@@ -231,8 +233,13 @@ func run_macro():
 
 
 func pop():
-	commands.pop_back()
-	stack.commands.remove_at(stack.commands.size() - 1)
+	if finish_line == 0:
+		return
+	
+	finish_line -= 1
+	print("NUM COMMANDS ", commands.size(), " REMOVE AT ", finish_line)
+	commands.remove_at(finish_line)
+	stack.commands.remove_at(finish_line)
 	if macro_recording is PackedStringArray:
 		macro_recording.remove_at(macro_recording.size() - 1)
 
@@ -307,9 +314,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif macro_recording == null:
 			macro_recording = PackedStringArray([])
 	elif event.is_action_pressed("ui_up"):
-		finish_line = max(finish_line - 1, 1)
+		finish_line -= 1
 	elif event.is_action_pressed("ui_down"):
-		finish_line = min(finish_line + 1, commands.size())
+		finish_line += 1
 	else:
 		_command_input(event)
 
@@ -344,9 +351,10 @@ func _command_input(event: InputEvent):
 func _completed_command(command: Callable):
 	if macro_recording is PackedStringArray:
 		macro_recording.append(command.get_method())
-	stack.commands.insert(finish_line - 1, CommandStack.CommandResource.from_callable(command))
-	commands.insert(finish_line - 1, command)
-	command_completed.emit(finish_line - 1)
+	
+	stack.commands.insert(finish_line, CommandStack.CommandResource.from_callable(command))
+	commands.insert(finish_line, command)
+	command_completed.emit(finish_line)
 	finish_line += 1
 	
 
