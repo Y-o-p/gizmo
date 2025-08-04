@@ -7,8 +7,17 @@ func _ready() -> void:
 	User.command.command_completed.connect.call_deferred(_on_command_completed)
 	User.command.commands_refreshed.connect.call_deferred(_on_commands_refreshed)
 
+
+func _process(delta: float) -> void:
+	move_child(finish_line, User.command.finish_line)
+
+
 func _on_commands_refreshed():
 	for child in get_children():
+		if child == finish_line:
+			continue
+
+		remove_child(child)
 		child.queue_free()
 	
 	for idx in range(User.command.commands.size()):
@@ -17,7 +26,6 @@ func _on_commands_refreshed():
 
 func _on_command_completed(command_idx: int):
 	add_child(construct_command_node(command_idx))
-	move_child(finish_line, -1)
 
 
 func construct_command_node(command_idx: int):

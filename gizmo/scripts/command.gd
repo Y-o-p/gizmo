@@ -10,6 +10,7 @@ signal invalid_command(error: String)
 
 var stack: CommandStack = preload("res://resources/cube.tres")
 var commands: Array = []
+var finish_line: int = 1
 var macro_recording = null
 
 @onready var KEY_TO_COMMAND: Dictionary = _get_event_to_command_dict()
@@ -40,6 +41,9 @@ func call_commands_thus_far():
 			
 			if command.call() is String:
 				break
+	
+	finish_line = max(1, min(finish_line, commands.size()))
+	print(finish_line)
 
 
 func load_command_stack(command_stack: CommandStack):
@@ -302,6 +306,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			)
 		elif macro_recording == null:
 			macro_recording = PackedStringArray([])
+	elif event.is_action_pressed("ui_up"):
+		finish_line = max(finish_line - 1, 1)
+	elif event.is_action_pressed("ui_down"):
+		finish_line = min(finish_line + 1, commands.size())
 	else:
 		_command_input(event)
 
@@ -325,20 +333,22 @@ func _command_input(event: InputEvent):
 					invalid_command.emit(result)
 					return
 				
-				#if macro_recording is PackedStringArray:
-					#macro_recording.append(command_as_string)
-				stack.commands.append(CommandStack.CommandResource.from_callable(callable))
-				commands.append(callable)
-				command_completed.emit(commands.size() - 1),
+				_completed_command(callable),
 			self.call(command_name + "_arg_types")
 		)
 	else:
 		callable.call()
-		if macro_recording is PackedStringArray:
-			macro_recording.append(command_name)
-		stack.commands.append(CommandStack.CommandResource.from_callable(callable))
-		commands.append(callable)
-		command_completed.emit(commands.size() - 1)
+		_completed_command(callable)
+
+
+func _completed_command(command: Callable):
+	if macro_recording is PackedStringArray:
+		macro_recording.append(command.get_method())
+	stack.commands.insert(finish_line - 1, CommandStack.CommandResource.from_callable(command))
+	commands.insert(finish_line - 1, command)
+	command_completed.emit(finish_line - 1)
+	finish_line += 1
+	
 
 
 func _wrapping_slice(array: Variant, start: int, end: int):
