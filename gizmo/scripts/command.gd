@@ -61,6 +61,7 @@ func reset():
 	selection.face = 0
 	selection.edge = 0
 	selection.vertex = 0
+	selection.selected_vertices.clear()
 	selection.model.build_initial_model()
 
 
@@ -237,7 +238,6 @@ func pop():
 		return
 	
 	finish_line -= 1
-	print("NUM COMMANDS ", commands.size(), " REMOVE AT ", finish_line)
 	commands.remove_at(finish_line)
 	stack.commands.remove_at(finish_line)
 	if macro_recording is PackedStringArray:
