@@ -7,6 +7,7 @@ signal commands_refreshed
 signal invalid_command(error: String)
 
 @export var selection: Selection
+var model_overlay: ModelOverlay
 
 var stack: CommandStack = preload("res://resources/cube.tres")
 var commands: Array = []
@@ -284,6 +285,9 @@ func _get_event_to_command_dict():
 
 
 func _ready() -> void:
+	model_overlay = ModelOverlay.new()
+	model_overlay.selection = selection
+	add_child(model_overlay)
 	User.command = self
 	call_deferred("load_command_stack", stack)
 

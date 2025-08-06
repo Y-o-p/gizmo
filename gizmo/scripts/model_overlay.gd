@@ -1,4 +1,5 @@
 extends Node
+class_name ModelOverlay
 
 @export var selection: Selection
 
