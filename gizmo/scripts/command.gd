@@ -1,13 +1,14 @@
 extends Node
 class_name Command
 
+@export var model: Model
+
 signal started_command(param_callback: Callable, arg_types: Array)
 signal command_completed(command_idx: int)
 signal commands_refreshed
 signal invalid_command(error: String)
 
-@export var selection: Selection
-var model_overlay: ModelOverlay
+var selection_stack: Array[Selection]
 
 var stack: CommandStack = preload("res://resources/cube.tres")
 var commands: Array = []
@@ -59,17 +60,18 @@ func load_command_stack(command_stack: CommandStack):
 
 
 func reset():
-	selection.face = 0
-	selection.edge = 0
-	selection.vertex = 0
-	selection.selected_vertices.clear()
+	selection_stack.clear()
+	var selection = Selection.new()
+	selection.model = model
 	selection.model.build_initial_model()
+	selection_stack.push_back(selection)
+	
 
 
 func export_model_as_gltf():
 	var gltf_document_save := GLTFDocument.new()
 	var gltf_state_save := GLTFState.new()
-	gltf_document_save.append_from_scene(selection.model, gltf_state_save)
+	gltf_document_save.append_from_scene(model, gltf_state_save)
 	var path = "user://gizmo_%d.gltf" % int(Time.get_unix_time_from_system())
 	gltf_document_save.write_to_filesystem(gltf_state_save, path)
 
@@ -80,27 +82,27 @@ func export_model_as_gltf():
 
 
 func move_face_selection():
-	selection.move_face_selection()
+	selection_stack.back().move_face_selection()
 
 
 func move_edge_selection():
-	selection.move_edge_selection()
+	selection_stack.back().move_edge_selection()
 
 
 func move_vertex_selection():
-	selection.move_vertex_selection()
+	selection_stack.back().move_vertex_selection()
 
 
 func select_vertex():
-	var vertex = selection.get_selected_vertex()
-	if vertex in selection.selected_vertices:
-		selection.selected_vertices.erase(vertex)
+	var vertex = selection_stack.back().get_selected_vertex()
+	if vertex in selection_stack.back().selected_vertices:
+		selection_stack.back().selected_vertices.erase(vertex)
 	else:
-		selection.selected_vertices.push_back(vertex)
+		selection_stack.back().selected_vertices.push_back(vertex)
 
 
 func clear_selected_vertices():
-	selection.selected_vertices.clear()
+	selection_stack.back().selected_vertices.clear()
 
 
 func translate_arg_types() -> Array:
@@ -108,21 +110,21 @@ func translate_arg_types() -> Array:
 
 
 func translate(delta: Vector3):
-	if selection.selected_vertices.is_empty():
-		var index = selection.get_selected_vertex()
-		selection.model.tool.set_vertex(
+	if selection_stack.back().selected_vertices.is_empty():
+		var index = selection_stack.back().get_selected_vertex()
+		selection_stack.back().model.tool.set_vertex(
 			index,
-			selection.model.tool.get_vertex(index) + delta
+			selection_stack.back().model.tool.get_vertex(index) + delta
 		)
 	else:
-		for index in selection.selected_vertices:
-			selection.model.tool.set_vertex(
+		for index in selection_stack.back().selected_vertices:
+			selection_stack.back().model.tool.set_vertex(
 				index,
-				selection.model.tool.get_vertex(index) + delta
+				selection_stack.back().model.tool.get_vertex(index) + delta
 			)
 	
-	selection.model.rebuild_surface_from_tool()
-	selection._emit_face_vertices()
+	selection_stack.back().model.rebuild_surface_from_tool()
+	selection_stack.back()._emit_face_vertices()
 
 
 func split_arg_types() -> Array:
@@ -134,44 +136,44 @@ func split(amount: float):
 		return "Amount must be between 0.0 and 1.0"
 
 	# Delete the old faces
-	for indices in [selection.get_selected_face_vertices(), selection.get_connected_face_vertices()]:
-		var face_index = selection.model.find_face(indices)
+	for indices in [selection_stack.back().get_selected_face_vertices(), selection_stack.back().get_connected_face_vertices()]:
+		var face_index = selection_stack.back().model.find_face(indices)
 		if face_index == -1:
 			return "Face no longer exists"
 		
 		for i in range(3):
-			selection.model.surface_array[Mesh.ARRAY_INDEX].remove_at(face_index)
+			selection_stack.back().model.surface_array[Mesh.ARRAY_INDEX].remove_at(face_index)
 
 	# Get the first vertex and second vertex
-	var first_vertex = selection.get_selected_vertex()
-	var edge_vertices = selection.get_selected_edge_vertices()
+	var first_vertex = selection_stack.back().get_selected_vertex()
+	var edge_vertices = selection_stack.back().get_selected_edge_vertices()
 	edge_vertices.erase(first_vertex)
 	var second_vertex = edge_vertices[0]
 
 	# Calculate the new vertex and add it
-	var new_vertex = (1.0 - amount) * selection.model.tool.get_vertex(first_vertex) + amount * selection.model.tool.get_vertex(second_vertex)
-	selection.model.surface_array[Mesh.ARRAY_VERTEX].append(new_vertex)
-	var new_vertex_idx = selection.model.surface_array[Mesh.ARRAY_VERTEX].size() - 1
+	var new_vertex = (1.0 - amount) * selection_stack.back().model.tool.get_vertex(first_vertex) + amount * selection_stack.back().model.tool.get_vertex(second_vertex)
+	selection_stack.back().model.surface_array[Mesh.ARRAY_VERTEX].append(new_vertex)
+	var new_vertex_idx = selection_stack.back().model.surface_array[Mesh.ARRAY_VERTEX].size() - 1
 	# Nullify the current normals
-	selection.model.surface_array[Mesh.ARRAY_NORMAL] = null
-	selection.model.surface_array[Mesh.ARRAY_TANGENT] = null
+	selection_stack.back().model.surface_array[Mesh.ARRAY_NORMAL] = null
+	selection_stack.back().model.surface_array[Mesh.ARRAY_TANGENT] = null
 	
 	# Get the starting vertex of the quad
-	var selected_face_vertices = selection.get_selected_face_vertices()
+	var selected_face_vertices = selection_stack.back().get_selected_face_vertices()
 	selected_face_vertices.erase(first_vertex)
 	selected_face_vertices.erase(second_vertex)
 	var a = selected_face_vertices[0]
 	
 	# Get the second to last vertex of the quad
-	var connected_face_vertices = selection.get_connected_face_vertices()
+	var connected_face_vertices = selection_stack.back().get_connected_face_vertices()
 	connected_face_vertices.erase(first_vertex)
 	connected_face_vertices.erase(second_vertex)
 	var c = connected_face_vertices[0]
 	
 	# Create the quad
-	selected_face_vertices = selection.get_selected_face_vertices()
+	selected_face_vertices = selection_stack.back().get_selected_face_vertices()
 	var start = selected_face_vertices.find(a)
-	var quad: PackedInt32Array = _wrapping_slice(selection.get_selected_face_vertices(), start, start + 3)
+	var quad: PackedInt32Array = _wrapping_slice(selection_stack.back().get_selected_face_vertices(), start, start + 3)
 	quad.insert(2, c)
 	
 	# Create 4 new faces
@@ -182,42 +184,42 @@ func split(amount: float):
 	
 	# Correct the selection
 	# The new face is either the first or last one depending on which vertex was selected
-	var first_or_last = 3 * selection.vertex
-	selection.face = selection.model.surface_array[Mesh.ARRAY_INDEX].size() / 3 + first_or_last
+	var first_or_last = 3 * selection_stack.back().vertex
+	selection_stack.back().face = selection_stack.back().model.surface_array[Mesh.ARRAY_INDEX].size() / 3 + first_or_last
 	var new_selected_face_indices = new_faces.slice(3 * first_or_last, 3 * first_or_last + 3)
-	selection.edge = (new_selected_face_indices.find(first_vertex) - selection.vertex) % 3
+	selection_stack.back().edge = (new_selected_face_indices.find(first_vertex) - selection_stack.back().vertex) % 3
 	
 	# Add the new faces and rebuild
-	selection.model.surface_array[Mesh.ARRAY_INDEX].append_array(new_faces)
-	selection.model.rebuild_surface_from_arrays()
+	selection_stack.back().model.surface_array[Mesh.ARRAY_INDEX].append_array(new_faces)
+	selection_stack.back().model.rebuild_surface_from_arrays()
 
 
 func pull():
 	# Create a new vertex on top of the currently selected vertex
-	var selected_vertex = selection.get_selected_vertex()
-	selection.model.surface_array[Mesh.ARRAY_VERTEX].push_back(selection.model.tool.get_vertex(selected_vertex))
-	var new_vertex_idx = selection.model.surface_array[Mesh.ARRAY_VERTEX].size() - 1
+	var selected_vertex = selection_stack.back().get_selected_vertex()
+	selection_stack.back().model.surface_array[Mesh.ARRAY_VERTEX].push_back(selection_stack.back().model.tool.get_vertex(selected_vertex))
+	var new_vertex_idx = selection_stack.back().model.surface_array[Mesh.ARRAY_VERTEX].size() - 1
 	
 	# Connect the currently selected face to the new vertex
-	var index_to_replace = selection.face * 3 + selection.edge + selection.vertex
-	selection.model.surface_array[Mesh.ARRAY_INDEX][index_to_replace] = new_vertex_idx
+	var index_to_replace = selection_stack.back().face * 3 + selection_stack.back().edge + selection_stack.back().vertex
+	selection_stack.back().model.surface_array[Mesh.ARRAY_INDEX][index_to_replace] = new_vertex_idx
 	
 	# Create the side faces
-	var index_array_size = selection.model.surface_array[Mesh.ARRAY_INDEX].size()
-	selection.model.surface_array[Mesh.ARRAY_INDEX].resize(index_array_size + 6)
+	var index_array_size = selection_stack.back().model.surface_array[Mesh.ARRAY_INDEX].size()
+	selection_stack.back().model.surface_array[Mesh.ARRAY_INDEX].resize(index_array_size + 6)
 	
-	var face_vertices = selection.get_selected_face_vertices()
+	var face_vertices = selection_stack.back().get_selected_face_vertices()
 	face_vertices.erase(selected_vertex)
-	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size] = new_vertex_idx
-	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 1] = selected_vertex
-	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 2] = face_vertices[0]
+	selection_stack.back().model.surface_array[Mesh.ARRAY_INDEX][index_array_size] = new_vertex_idx
+	selection_stack.back().model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 1] = selected_vertex
+	selection_stack.back().model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 2] = face_vertices[0]
 	
-	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 3] = new_vertex_idx
-	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 4] = face_vertices[1]
-	selection.model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 5] = selected_vertex
+	selection_stack.back().model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 3] = new_vertex_idx
+	selection_stack.back().model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 4] = face_vertices[1]
+	selection_stack.back().model.surface_array[Mesh.ARRAY_INDEX][index_array_size + 5] = selected_vertex
 	
 	# Rebuild the model
-	selection.model.rebuild_surface_from_arrays()
+	selection_stack.back().model.rebuild_surface_from_arrays()
 
 
 func run_macro():
@@ -285,9 +287,12 @@ func _get_event_to_command_dict():
 
 
 func _ready() -> void:
-	model_overlay = ModelOverlay.new()
-	model_overlay.selection = selection
-	add_child(model_overlay)
+	# Set up the first selection which depends on model
+	var selection := Selection.new()
+	selection.model = model
+	selection_stack.push_back(selection)
+
+	# Tell the singleton to set the command to self
 	User.command = self
 	call_deferred("load_command_stack", stack)
 

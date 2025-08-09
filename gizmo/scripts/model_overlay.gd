@@ -1,7 +1,7 @@
 extends Node
 class_name ModelOverlay
 
-@export var selection: Selection
+@export var command: Command
 
 var _meshes = []
 func _process(delta: float) -> void:
@@ -13,8 +13,8 @@ func _process(delta: float) -> void:
 	
 	_meshes.clear()
 
-	var face_vertices = selection.get_selected_face_vertices()
-	var edge_vertices = selection.get_selected_edge_vertices()
+	var face_vertices = command.selection_stack.back().get_selected_face_vertices()
+	var edge_vertices = command.selection_stack.back().get_selected_edge_vertices()
 
 	# Draw the face lines
 	for idx in range(len(face_vertices)):
@@ -24,27 +24,27 @@ func _process(delta: float) -> void:
 			continue
 
 		_meshes.append(Draw3D.line(
-			selection.model.tool.get_vertex(a),
-			selection.model.tool.get_vertex(b),
+			command.selection_stack.back().model.tool.get_vertex(a),
+			command.selection_stack.back().model.tool.get_vertex(b),
 			Color("ac6b26"),
 			false
 		))
 
 	# Draw the edge line
 	_meshes.append(Draw3D.line(
-		selection.model.tool.get_vertex(edge_vertices[0]),
-		selection.model.tool.get_vertex(edge_vertices[1]),
+		command.selection_stack.back().model.tool.get_vertex(edge_vertices[0]),
+		command.selection_stack.back().model.tool.get_vertex(edge_vertices[1]),
 		Color("f6cd26"),
 		false
 	))
 
 	# Draw the point
-	var vertex = selection.get_selected_vertex()
-	_meshes.append(Draw3D.point(selection.model.tool.get_vertex(vertex), 0.02, Color("f6cd26"), false))
+	var vertex = command.selection_stack.back().get_selected_vertex()
+	_meshes.append(Draw3D.point(command.selection_stack.back().model.tool.get_vertex(vertex), 0.02, Color("f6cd26"), false))
 	
 	# Draw all selected vertices
-	for selected_vertex in selection.selected_vertices:
-		_meshes.append(Draw3D.point(selection.model.tool.get_vertex(selected_vertex), 0.02, Color("725956")))
+	for selected_vertex in command.selection_stack.back().selected_vertices:
+		_meshes.append(Draw3D.point(command.selection_stack.back().model.tool.get_vertex(selected_vertex), 0.02, Color("725956")))
 	
 	for mesh in _meshes:
 		add_child(mesh)

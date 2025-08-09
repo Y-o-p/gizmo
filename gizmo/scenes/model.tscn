@@ -1,9 +1,9 @@
 [gd_scene load_steps=9 format=3 uid="uid://cc6ht2rvnq6x2"]
 
-[ext_resource type="Script" uid="uid://b6wtute28vynl" path="res://scripts/selection.gd" id="1_30clo"]
 [ext_resource type="Script" uid="uid://bbmlrtiumh7yc" path="res://scripts/model.gd" id="1_rka1o"]
 [ext_resource type="Script" uid="uid://bgqy5n4t8ih30" path="res://scripts/command.gd" id="1_yyhii"]
 [ext_resource type="Script" uid="uid://21b5m0wyjjr1" path="res://scripts/camera_3d.gd" id="2_d5leo"]
+[ext_resource type="Script" uid="uid://dg6ak33eu1avv" path="res://scripts/model_overlay.gd" id="2_yyhii"]
 [ext_resource type="Script" uid="uid://bjakpnm48wdg7" path="res://scripts/axes.gd" id="6_jpifx"]
 
 [sub_resource type="Environment" id="Environment_rka1o"]
@@ -21,13 +21,14 @@ albedo_color = Color(0.22352941, 0.22352941, 0.22352941, 1)
 
 [node name="Model" type="Node3D"]
 
-[node name="Command" type="Node" parent="." node_paths=PackedStringArray("selection")]
+[node name="Command" type="Node" parent="." node_paths=PackedStringArray("model")]
 script = ExtResource("1_yyhii")
-selection = NodePath("../Selection")
-
-[node name="Selection" type="Node" parent="." node_paths=PackedStringArray("model")]
-script = ExtResource("1_30clo")
 model = NodePath("../Model")
+
+[node name="ModelOverlay" type="Node" parent="." node_paths=PackedStringArray("command")]
+script = ExtResource("2_yyhii")
+command = NodePath("../Command")
+metadata/_custom_type_script = "uid://dg6ak33eu1avv"
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_rka1o")
@@ -43,13 +44,13 @@ script = ExtResource("1_rka1o")
 
 [node name="CameraPivot" type="Node3D" parent="."]
 
-[node name="Camera3D" type="Camera3D" parent="CameraPivot" node_paths=PackedStringArray("selection")]
+[node name="Camera3D" type="Camera3D" parent="CameraPivot" node_paths=PackedStringArray("command")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.179163)
 projection = 1
 size = 1.474
 near = 0.001
 script = ExtResource("2_d5leo")
-selection = NodePath("../../Selection")
+command = NodePath("../../Command")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.99999994, 0, 0, 0, 0.99999994, 0, 0, 0, 0.9999999, 0, 0, 0)

@@ -1,6 +1,6 @@
 extends Camera3D
 
-@export var selection: Selection
+@export var command: Command
 @export var distance: float = 5
 @export_range(0.0, 1.0) var mouse_sensitivity = 0.01
 @onready var _camera_pivot = get_parent()
@@ -12,25 +12,24 @@ var _current_distance := 5.0
 var _current_size := 5.0
 var RAY_LENGTH := 5000.0
 
-func _ready() -> void:
-	selection.face_changed.connect(_on_face_changed)
-
-func _on_face_changed(a: Vector3, b: Vector3, c: Vector3):
-	var center = (a + b + c) / 3.0
-	_desired_position = center
-
 func _process(delta) -> void:
 	if Input.is_action_just_released("rotate_mode"):
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	
-	## For perspective mode
+	# For perspective mode
 	_current_distance = lerp(_current_distance, distance, 10.0 * delta)
 	position = _current_distance * Vector3(0.0, 0.0, 1.0)
 	
-	## For orthogonal mode
+	# For orthogonal mode
 	_current_size = lerp(_current_size, distance, 10.0 * delta)
 	size = _current_size
 	
+	# Calculating desired position based on the current selection
+	var face_vertices: Array = command.selection_stack.back().get_selected_face_vertices()
+	var vertex_positions: Array = face_vertices.map(command.model.tool.get_vertex)
+	_desired_position = vertex_positions.reduce(func(x, y): return x + y) / 3.0
+	
+	# Smoothly interpolate between the current position and the desired position
 	_camera_pivot.position = lerp(_camera_pivot.position, _desired_position, 10.0 * delta)
 
 func _unhandled_input(event: InputEvent) -> void:
