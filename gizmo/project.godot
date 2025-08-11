@@ -22,6 +22,7 @@ User="*res://globals/user.gd"
 Scenes="*res://globals/scenes.gd"
 Draw3D="*res://globals/draw_3d.gd"
 Macros="*res://scripts/macros.gd"
+Helpers="*res://scripts/helpers.gd"
 
 [display]
 

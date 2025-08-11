@@ -1,64 +1,63 @@
 extends MeshInstance3D
 class_name Model
 
-var tool := MeshDataTool.new()
-var surface_array = []
-
-signal geometry_added
+@export_flags(
+	"Normals:2",
+	"Tangents:4",
+	"Colors:8",
+	"Texture UV:16",
+	"Texture UV2:32",
+) var vertex_attribute_flags := 0
+var tool: DynamicMeshDataTool = DynamicMeshDataTool.new()
 
 func _ready() -> void:
-	build_initial_model()
+	tool.vertex_attribute_flags = vertex_attribute_flags
+	reset()
 
-func build_initial_model():
+func reset():
+	tool.clear()
+	
 	# Data for the initial tetrahedron
-	var vertices: PackedVector3Array = [
-		Vector3(0, 0, 0),
-		Vector3(0, 0, 1),
-		Vector3(0, 1, 0),
-		Vector3(1, 0, 0),
+	var v: PackedInt32Array = [
+		tool.add_vertex(Vector3(0, 0, 0)),
+		tool.add_vertex(Vector3(0, 0, 1)),
+		tool.add_vertex(Vector3(0, 1, 0)),
+		tool.add_vertex(Vector3(1, 0, 0)),
 	]
-	var indices: PackedInt32Array = [
-		0, 2, 1,
-		0, 1, 3,
-		0, 3, 2,
-		3, 1, 2,
-	]
+	tool.add_face(v[0], v[2], v[1])
+	tool.add_face(v[0], v[1], v[3])
+	tool.add_face(v[0], v[3], v[2])
+	tool.add_face(v[3], v[1], v[2])
 
-	# Assign arrays to surface array.
-	surface_array.clear()
-	surface_array.resize(Mesh.ARRAY_MAX)
-	surface_array[Mesh.ARRAY_VERTEX] = vertices
-	surface_array[Mesh.ARRAY_INDEX] = indices
-	
-	rebuild_surface_from_arrays()
+	rebuild_model()
 
 
-func generate_normals():
-	var number_of_vertices = surface_array[Mesh.ARRAY_VERTEX].size()
-	surface_array[Mesh.ARRAY_NORMAL] = PackedVector3Array([])
-	surface_array[Mesh.ARRAY_NORMAL].resize(number_of_vertices)
-	var index_to_face_count := PackedInt32Array([])
-	index_to_face_count.resize(number_of_vertices)
-	var index_to_normal_sum := PackedVector3Array([])
-	index_to_normal_sum.resize(number_of_vertices)
-	
-	var number_of_indices = surface_array[Mesh.ARRAY_INDEX].size()
-	for i in range(0, number_of_indices, 3):
-		var face = [
-			surface_array[Mesh.ARRAY_INDEX][i],
-			surface_array[Mesh.ARRAY_INDEX][i + 1],
-			surface_array[Mesh.ARRAY_INDEX][i + 2],
-		]
-		var a = surface_array[Mesh.ARRAY_VERTEX][face[0]]
-		var b = surface_array[Mesh.ARRAY_VERTEX][face[1]]
-		var c = surface_array[Mesh.ARRAY_VERTEX][face[2]]
-		var face_normal = (b - a).cross(c - a)
-		for index in face:
-			index_to_face_count[index] += 1
-			index_to_normal_sum[index] += face_normal
-	
-	for index in range(surface_array[Mesh.ARRAY_VERTEX].size()):
-		surface_array[Mesh.ARRAY_NORMAL][index] = index_to_normal_sum[index] / index_to_face_count[index]
+#func generate_normals():
+	#var number_of_vertices = surface_array[Mesh.ARRAY_VERTEX].size()
+	#surface_array[Mesh.ARRAY_NORMAL] = PackedVector3Array([])
+	#surface_array[Mesh.ARRAY_NORMAL].resize(number_of_vertices)
+	#var index_to_face_count := PackedInt32Array([])
+	#index_to_face_count.resize(number_of_vertices)
+	#var index_to_normal_sum := PackedVector3Array([])
+	#index_to_normal_sum.resize(number_of_vertices)
+	#
+	#var number_of_indices = surface_array[Mesh.ARRAY_INDEX].size()
+	#for i in range(0, number_of_indices, 3):
+		#var face = [
+			#surface_array[Mesh.ARRAY_INDEX][i],
+			#surface_array[Mesh.ARRAY_INDEX][i + 1],
+			#surface_array[Mesh.ARRAY_INDEX][i + 2],
+		#]
+		#var a = surface_array[Mesh.ARRAY_VERTEX][face[0]]
+		#var b = surface_array[Mesh.ARRAY_VERTEX][face[1]]
+		#var c = surface_array[Mesh.ARRAY_VERTEX][face[2]]
+		#var face_normal = (b - a).cross(c - a)
+		#for index in face:
+			#index_to_face_count[index] += 1
+			#index_to_normal_sum[index] += face_normal
+	#
+	#for index in range(surface_array[Mesh.ARRAY_VERTEX].size()):
+		#surface_array[Mesh.ARRAY_NORMAL][index] = index_to_normal_sum[index] / index_to_face_count[index]
 
 
 var _clear_wireframe: Callable = func(): pass
@@ -66,42 +65,29 @@ func rebuild_wireframe():
 	_clear_wireframe.call()
 
 	var lines_to_clear = []
-	for edge_idx in range(tool.get_edge_count()):
-		var a = tool.get_vertex(tool.get_edge_vertex(edge_idx, 0))
-		var b = tool.get_vertex(tool.get_edge_vertex(edge_idx, 1))
-		lines_to_clear.append(Draw3D.line(a, b, Color("#725956")))
-		add_child(lines_to_clear.back())
+	var incomplete_edges: Array = tool.edges.keys().duplicate()
+	incomplete_edges.sort()
+	for face_verts in tool.faces.values():
+		for i in range(3):
+			var a = face_verts[i]
+			var b = face_verts[(i + 1) % 3]
+			var edge_id_index = incomplete_edges.find(tool.get_edge_id(a, b))
+			if edge_id_index == -1:
+				continue
+			
+			lines_to_clear.append(Draw3D.line(tool.positions[a], tool.positions[b], Color("#725956")))
+			add_child(lines_to_clear.back())
+			incomplete_edges.remove_at(edge_id_index)
 	
 	_clear_wireframe = func():
 		for line in lines_to_clear:
 			line.queue_free()
 
 
-func rebuild_surface_from_arrays():
+func rebuild_model():
+	# Clear the mesh
 	mesh.clear_surfaces()
-	# Nullify the current normals
-	surface_array[Mesh.ARRAY_NORMAL] = null
-	surface_array[Mesh.ARRAY_TANGENT] = null
-	generate_normals()
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface_array)
-	tool.clear()
-	tool.create_from_surface(mesh, 0)
-	rebuild_wireframe()
-
-
-func rebuild_surface_from_tool():
-	mesh.clear_surfaces()
-	# NOTE: MetaDataTool doesn't have a commit_to_arrays() so I'm stuck doing this for now
-	tool.commit_to_surface(mesh)
-	surface_array = mesh.surface_get_arrays(0)
-	generate_normals()
-	rebuild_surface_from_arrays()
-
-
-func find_face(search: PackedInt32Array):
-	for i in range(0, surface_array[Mesh.ARRAY_INDEX].size(), 3):
-		var face = surface_array[Mesh.ARRAY_INDEX].slice(i, i + 3)
-		if face == search:
-			return i
 	
-	return -1
+	# Rebuild the surface
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, tool.commit_to_arrays())
+	rebuild_wireframe()

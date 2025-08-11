@@ -13,7 +13,6 @@ ambient_light_sky_contribution = 0.85
 volumetric_fog_sky_affect = 0.328
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yyhii"]
-cull_mode = 2
 shading_mode = 0
 albedo_color = Color(0.22352941, 0.22352941, 0.22352941, 1)
 
