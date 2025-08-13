@@ -8,7 +8,8 @@ signal command_completed(command_idx: int)
 signal commands_refreshed
 signal invalid_command(error: String)
 
-var selection_stack: Array[Selection]
+#var selection_stack: Array[Selection]
+var selection: Selection
 
 var stack: CommandStack = preload("res://resources/cube.tres")
 var commands: Array = []
@@ -62,11 +63,10 @@ func load_command_stack(command_stack: CommandStack):
 func reset():
 	model.reset()
 	
-	selection_stack.clear()
-	var selection = Selection.new()
+	#selection_stack.clear()
+	selection = Selection.new()
 	selection.model = model
 	selection.face_id = model.tool.faces.keys()[0]
-	selection_stack.push_back(selection)
 
 
 func export_model_as_gltf():
@@ -82,20 +82,24 @@ func export_model_as_gltf():
 ################################################################################
 
 
+#func push_selection():
+	#selection_stack
+
+
 func move_face_selection():
-	selection_stack.back().move_face_selection()
+	selection.move_face_selection()
 
 
 func move_edge_selection():
-	selection_stack.back().move_edge_selection()
+	selection.move_edge_selection()
 
 
 func move_vertex_selection():
-	selection_stack.back().move_vertex_selection()
+	selection.move_vertex_selection()
 
 
 func select_vertex():
-	var selection: Selection = selection_stack.back()
+	var selection: Selection = selection
 	var vertex = selection.get_selected_vertex()
 	if vertex in selection.selected_vertices:
 		selection.selected_vertices.erase(vertex)
@@ -104,7 +108,7 @@ func select_vertex():
 
 
 func clear_selected_vertices():
-	selection_stack.back().selected_vertices.clear()
+	selection.selected_vertices.clear()
 
 
 func translate_arg_types() -> Array:
@@ -112,7 +116,7 @@ func translate_arg_types() -> Array:
 
 
 func translate(delta: Vector3):
-	var selection: Selection = selection_stack.back()
+	var selection: Selection = selection
 	
 	if selection.selected_vertices.is_empty():
 		var id = selection.get_selected_vertex()
@@ -131,8 +135,6 @@ func split_arg_types() -> Array:
 func split(amount: float):
 	if amount < 0.0 or amount > 1.0:
 		return "Amount must be between 0.0 and 1.0"
-
-	var selection: Selection = selection_stack.back()
 
 	# Get the first vertex and second vertex
 	var first_vertex = selection.get_selected_vertex()
@@ -161,8 +163,6 @@ func split(amount: float):
 	model.tool.update_face_vertex(connected_face_id, right_midpoint, new_vertex_id)
 
 func pull():
-	var selection: Selection = selection_stack.back()
-
 	# Create a new vertex on top of the currently selected vertex
 	var selected_vertex_id = selection.get_selected_vertex()
 	var new_vertex_id = model.tool.add_vertex(model.tool.positions[selected_vertex_id])
@@ -255,11 +255,6 @@ func _get_event_to_command_dict():
 
 
 func _ready() -> void:
-	# Set up the first selection which depends on model
-	var selection := Selection.new()
-	selection.model = model
-	selection_stack.push_back(selection)
-
 	# Tell the singleton to set the command to self
 	User.command = self
 	call_deferred("load_command_stack", stack)

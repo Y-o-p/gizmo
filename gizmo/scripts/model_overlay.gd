@@ -13,10 +13,9 @@ func _process(delta: float) -> void:
 	
 	_meshes.clear()
 
-	var selection: Selection = command.selection_stack.back()
-	var positions := selection.model.tool.positions
-	var face_vertices = selection.get_selected_face_vertices()
-	var edge_vertices = selection.get_selected_edge_vertices()
+	var positions := command.selection.model.tool.positions
+	var face_vertices = command.selection.get_selected_face_vertices()
+	var edge_vertices = command.selection.get_selected_edge_vertices()
 
 	# Draw the face lines
 	for idx in range(len(face_vertices)):
@@ -41,11 +40,11 @@ func _process(delta: float) -> void:
 	))
 
 	# Draw the point
-	var vertex = selection.get_selected_vertex()
+	var vertex = command.selection.get_selected_vertex()
 	_meshes.append(Draw3D.point(positions[vertex], 0.02, Color("f6cd26"), false))
 	
 	# Draw all selected vertices
-	for selected_vertex in selection.selected_vertices:
+	for selected_vertex in command.selection.selected_vertices:
 		_meshes.append(Draw3D.point(positions[selected_vertex], 0.02, Color("725956")))
 	
 	for mesh in _meshes:

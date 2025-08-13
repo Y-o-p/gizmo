@@ -25,7 +25,7 @@ func _process(delta) -> void:
 	size = _current_size
 	
 	# Calculating desired position based on the current selection
-	var face_vertices: Array = command.selection_stack.back().get_selected_face_vertices()
+	var face_vertices: Array = command.selection.get_selected_face_vertices()
 	var vertex_positions: Array = face_vertices.map(func(x): return command.model.tool.positions[x])
 	_desired_position = vertex_positions.reduce(func(x, y): return x + y) / 3.0
 	
