@@ -8,7 +8,7 @@ signal command_completed(command_idx: int)
 signal commands_refreshed
 signal invalid_command(error: String)
 
-#var selection_stack: Array[Selection]
+var selection_stack: Array[Selection]
 var selection: Selection
 
 var stack: CommandStack = preload("res://resources/cube.tres")
@@ -63,7 +63,7 @@ func load_command_stack(command_stack: CommandStack):
 func reset():
 	model.reset()
 	
-	#selection_stack.clear()
+	selection_stack.clear()
 	selection = Selection.new()
 	selection.model = model
 	selection.face_id = model.tool.faces.keys()[0]
@@ -82,8 +82,15 @@ func export_model_as_gltf():
 ################################################################################
 
 
-#func push_selection():
-	#selection_stack
+func push_selection():
+	selection_stack.push_back(selection.duplicate())
+
+
+func pop_selection():
+	if selection_stack.is_empty():
+		return
+
+	selection = selection_stack.pop_back()
 
 
 func move_face_selection():
