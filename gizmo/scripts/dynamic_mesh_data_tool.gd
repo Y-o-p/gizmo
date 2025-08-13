@@ -99,10 +99,11 @@ func clear():
 	edges.clear()
 	surface.clear()
 	vertex_count = 0
+	_vertex_id = -1
+	_face_id = -1
 	
 	surface.resize(Mesh.ARRAY_MAX)
 	surface[Mesh.ARRAY_VERTEX] = PackedVector3Array()
-	#surface[Mesh.ARRAY_INDEX] = PackedInt32Array()
 	
 	if vertex_attribute_flags & 0b1 != 0:
 		surface[Mesh.ARRAY_NORMAL] = PackedVector3Array()
