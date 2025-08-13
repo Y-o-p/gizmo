@@ -2,11 +2,11 @@ extends MeshInstance3D
 class_name Model
 
 @export_flags(
-	"Normals:2",
-	"Tangents:4",
-	"Colors:8",
-	"Texture UV:16",
-	"Texture UV2:32",
+	"Normals:1",
+	"Tangents:2",
+	"Colors:4",
+	"Texture UV:8",
+	"Texture UV2:16",
 ) var vertex_attribute_flags := 0
 var tool: DynamicMeshDataTool = DynamicMeshDataTool.new()
 

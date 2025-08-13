@@ -75,6 +75,22 @@ func add_face(vertex_a: int, vertex_b: int, vertex_c: int):
 		var attribute_id = get_attrib_id(face_id, vert_ids[i])
 		vertex_attributes[attribute_id] = vertex_count
 		vertex_count += 1
+	
+	return face_id
+
+
+func update_face_vertex(face_id: int, index: int, new_vertex_id: int):
+	var vert_ids = faces[face_id]
+	for i in [-1, 1]:
+		var old_edge = get_edge_id(vert_ids[(index + i) % 3], vert_ids[index])
+		edges[old_edge].erase(face_id)
+		var new_edge = get_edge_id(vert_ids[(index + i) % 3], new_vertex_id)
+		if edges.has(new_edge):
+			edges[new_edge].append(face_id)
+		else:
+			edges[new_edge] = PackedInt32Array([face_id])
+	
+	vert_ids[index] = new_vertex_id
 
 
 func clear():

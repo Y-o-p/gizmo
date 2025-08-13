@@ -128,69 +128,37 @@ func split_arg_types() -> Array:
 	return [typeof(float())]
 
 
-#func split(amount: float):
-	#if amount < 0.0 or amount > 1.0:
-		#return "Amount must be between 0.0 and 1.0"
-#
-	#var selection: Selection = selection_stack.back()
-	## Delete the old faces
-	#for indices in [selection.get_selected_face_vertices(), selection.get_connected_face_vertices()]:
-		#var face_index = selection.model.find_face(indices)
-		#if face_index == -1:l
-			#return "Face no longer exists"
-		#
-		#for i in range(3):
-			#selection.model.surface_array[Mesh.ARRAY_INDEX].remove_at(face_index)
-#
-	## Get the first vertex and second vertex
-	#var first_vertex = selection.get_selected_vertex()
-	#var edge_vertices = selection.get_selected_edge_vertices()
-	#edge_vertices.erase(first_vertex)
-	#var second_vertex = edge_vertices[0]
-#
-	## Calculate the new vertex and add it
-	#var new_vertex = (1.0 - amount) * selection.model.tool.get_vertex(first_vertex) + amount * selection.model.tool.get_vertex(second_vertex)
-	#selection.model.surface_array[Mesh.ARRAY_VERTEX].append(new_vertex)
-	#var new_vertex_idx = selection.model.surface_array[Mesh.ARRAY_VERTEX].size() - 1
-	## Nullify the current normals
-	#selection.model.surface_array[Mesh.ARRAY_NORMAL] = null
-	#selection.model.surface_array[Mesh.ARRAY_TANGENT] = null
-	#
-	## Get the starting vertex of the quad
-	#var selected_face_vertices = selection.get_selected_face_vertices()
-	#selected_face_vertices.erase(first_vertex)
-	#selected_face_vertices.erase(second_vertex)
-	#var a = selected_face_vertices[0]
-	#
-	## Get the second to last vertex of the quad
-	#var connected_face_vertices = selection.get_connected_face_vertices()
-	#connected_face_vertices.erase(first_vertex)
-	#connected_face_vertices.erase(second_vertex)
-	#var c = connected_face_vertices[0]
-	#
-	## Create the quad
-	#selected_face_vertices = selection.get_selected_face_vertices()
-	#var start = selected_face_vertices.find(a)
-	#var quad: PackedInt32Array = _wrapping_slice(selection.get_selected_face_vertices(), start, start + 3)
-	#quad.insert(2, c)
-	#
-	## Create 4 new faces
-	#var new_faces := PackedInt32Array()
-	#for edge_start in range(4):
-		#new_faces.append(new_vertex_idx)
-		#new_faces.append_array(_wrapping_slice(quad, edge_start, edge_start + 2))
-	#
-	## Correct the selection
-	## The new face is either the first or last one depending on which vertex was selected
-	#var first_or_last = 3 * selection.vertex
-	#selection.face = selection.model.surface_array[Mesh.ARRAY_INDEX].size() / 3 + first_or_last
-	#var new_selected_face_indices = new_faces.slice(3 * first_or_last, 3 * first_or_last + 3)
-	#selection.edge = (new_selected_face_indices.find(first_vertex) - selection.vertex) % 3
-	#
-	## Add the new faces and rebuild
-	#selection.model.surface_array[Mesh.ARRAY_INDEX].append_array(new_faces)
-	#selection.model.rebuild_surface_from_arrays()
+func split(amount: float):
+	if amount < 0.0 or amount > 1.0:
+		return "Amount must be between 0.0 and 1.0"
 
+	var selection: Selection = selection_stack.back()
+
+	# Get the first vertex and second vertex
+	var first_vertex = selection.get_selected_vertex()
+	var second_vertex = selection.get_unselected_vertex()
+
+	# Calculate the new vertex and add it
+	var new_vertex_position = (1.0 - amount) * model.tool.positions[first_vertex] + amount * model.tool.positions[second_vertex]
+	var new_vertex_id = model.tool.add_vertex(new_vertex_position)
+	
+	# Get metadata
+	var original_edge_vertices = selection.get_selected_edge_vertices()
+	var original_face_vertices = selection.get_selected_face_vertices()
+	var original_connected_face_vertices = selection.get_connected_face_vertices()
+	
+	# Build two new faces
+	var left_midpoint = original_face_vertices.find(original_edge_vertices[1])
+	var left_end = original_face_vertices[(left_midpoint + 1) % 3]
+	model.tool.add_face(new_vertex_id, original_edge_vertices[1], left_end)
+	var right_midpoint = original_connected_face_vertices.find(original_edge_vertices[1])
+	var right_end = original_connected_face_vertices[(right_midpoint - 1) % 3]
+	model.tool.add_face(original_edge_vertices[1], new_vertex_id, right_end)
+	
+	# Update the metadata
+	var connected_face_id = selection.get_connected_face()
+	model.tool.update_face_vertex(selection.face_id, left_midpoint, new_vertex_id)
+	model.tool.update_face_vertex(connected_face_id, right_midpoint, new_vertex_id)
 
 func pull():
 	var selection: Selection = selection_stack.back()

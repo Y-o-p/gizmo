@@ -23,6 +23,11 @@ func get_selected_vertex() -> int:
 	return get_selected_edge_vertices()[vertex]
 
 
+## Returns the vertex ID of the currently unselected vertex
+func get_unselected_vertex() -> int:
+	return get_selected_edge_vertices()[int(not vertex)]
+
+
 ## Returns the connected face ID
 func get_connected_face():
 	var a = model.tool.faces[face_id][edge]
