@@ -296,6 +296,21 @@ func _unhandled_input(event: InputEvent) -> void:
 		finish_line -= 1
 	elif event.is_action_pressed("ui_down"):
 		finish_line += 1
+	elif event.is_action_pressed("ui_right"):
+		var system := LindenmayerSystem.new()
+		system.constants = {
+			"F": func (command: Command):
+				command.translate(Vector3(0.25, 0.25, 0.25)),
+		}
+		system.production_rules = {
+			"A": "DFJ",
+		}
+		var sequence = system.get_next_sequence("A")
+		for i in range(5):
+			sequence = system.get_next_sequence(sequence)
+		
+		print(sequence)
+		system.execute_sequence(sequence, self)
 	else:
 		_command_input(event)
 
