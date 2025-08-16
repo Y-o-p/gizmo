@@ -1,0 +1,23 @@
+[gd_scene load_steps=2 format=3 uid="uid://6qkturaxdr3o"]
+
+[ext_resource type="Script" uid="uid://clm74yqwj8uca" path="res://scripts/command_editor.gd" id="1_wkd5t"]
+
+[node name="CommandEditor" type="PanelContainer"]
+offset_right = 40.0
+offset_bottom = 43.0
+script = ExtResource("1_wkd5t")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="ParameterContainer" type="VBoxContainer" parent="MarginContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="MarginContainer/ParameterContainer"]
+unique_name_in_owner = true
+layout_mode = 2

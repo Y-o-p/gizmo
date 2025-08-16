@@ -19,6 +19,9 @@ corner_radius_bottom_left = 10
 
 [node name="Model" parent="." instance=ExtResource("2_0xm2m")]
 
+[node name="Axes" parent="Model" index="3"]
+script = null
+
 [node name="GUI" type="CanvasLayer" parent="."]
 
 [node name="MarginContainer" type="MarginContainer" parent="GUI"]
@@ -37,20 +40,20 @@ script = ExtResource("2_sugp2")
 oversampling_override = 1.0
 position = Vector2i(0, 36)
 
-[node name="MarginContainer" type="ScrollContainer" parent="CommandGraph"]
+[node name="ScrollContainer" type="ScrollContainer" parent="CommandGraph"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="CommandStackContainer" type="VBoxContainer" parent="CommandGraph/MarginContainer" node_paths=PackedStringArray("finish_line")]
+[node name="CommandStackContainer" type="VBoxContainer" parent="CommandGraph/ScrollContainer" node_paths=PackedStringArray("finish_line")]
 layout_mode = 2
 size_flags_horizontal = 3
 script = ExtResource("2_0wfyh")
 finish_line = NodePath("Panel")
 
-[node name="Panel" type="Panel" parent="CommandGraph/MarginContainer/CommandStackContainer"]
+[node name="Panel" type="Panel" parent="CommandGraph/ScrollContainer/CommandStackContainer"]
 custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_sugp2")

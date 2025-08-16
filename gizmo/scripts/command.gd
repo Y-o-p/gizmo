@@ -3,8 +3,8 @@ class_name Command
 
 @export var model: Model
 
-signal started_command(param_callback: Callable, arg_types: Array)
-signal command_completed(command_idx: int)
+signal started_command(command: CallableReference, submit: Callable)
+signal command_completed(command: CallableReference)
 signal commands_refreshed
 signal invalid_command(error: String)
 
@@ -40,11 +40,11 @@ func call_commands_thus_far():
 	for command in commands:
 		if command is String:
 			break
-		elif command is Callable:
-			if not command.is_valid():
+		elif command is CallableReference:
+			if not command.callable.is_valid():
 				break
 			
-			if command.call() is String:
+			if command.callable.call() is String:
 				break
 	
 	# Properties be like: nothing to see here <:^)
@@ -118,8 +118,8 @@ func clear_selected_vertices():
 	selection.selected_vertices.clear()
 
 
-func translate_arg_types() -> Array:
-	return [typeof(Vector3())]
+func translate_default_args() -> Array:
+	return [Vector3(0, 0, 0)]
 
 
 func translate(delta: Vector3):
@@ -135,8 +135,8 @@ func translate(delta: Vector3):
 	selection.model.rebuild_model()
 
 
-func split_arg_types() -> Array:
-	return [typeof(float())]
+func split_default_args() -> Array:
+	return [float(0.5)]
 
 
 func split(amount: float):
@@ -304,6 +304,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		
 		print(sequence)
 		system.execute_sequence(sequence, self)
+	elif event.is_action_pressed("create_lindenmayer"):
+		var lindenmayer_editor = Scenes.LINDENMAYER_EDITOR.instantiate()
+		add_child(lindenmayer_editor)
 	else:
 		_command_input(event)
 
@@ -313,33 +316,33 @@ func _command_input(event: InputEvent):
 	if not KEY_TO_COMMAND.has(input_text):
 		return
 	
-	var callable: Callable = KEY_TO_COMMAND[input_text]
-	var command_name = callable.get_method()
+	var ref := CallableReference.new(KEY_TO_COMMAND[input_text])
+	var command_name = ref.callable.get_method()
 	if not Input.is_action_just_pressed(command_name):
 		return
 
-	if callable.get_argument_count() > 0:
+	if ref.callable.get_argument_count() > 0:
+		ref.callable = ref.callable.bindv(self.call(command_name + "_default_args"))
 		started_command.emit(
-			func(parameters: Array):
-				callable = callable.bindv(parameters)
-				var result = callable.call()
+			ref,
+			(func():
+				var result = ref.callable.call()
 				if result is String:
 					invalid_command.emit(result)
 					return
 				
-				_completed_command(callable),
-			self.call(command_name + "_arg_types")
+				_completed_command(ref))
 		)
 	else:
-		callable.call()
-		_completed_command(callable)
+		ref.callable.call()
+		_completed_command(ref)
 
 
-func _completed_command(command: Callable):
+func _completed_command(command: CallableReference):
 	if macro_recording is PackedStringArray:
-		macro_recording.append(command.get_method())
+		macro_recording.append(command.callable.get_method())
 	
-	stack.commands.insert(finish_line, CommandStack.CommandResource.from_callable(command))
+	stack.commands.insert(finish_line, CommandStack.CommandResource.from_callable(command.callable))
 	commands.insert(finish_line, command)
-	command_completed.emit(finish_line)
+	command_completed.emit(command)
 	finish_line += 1

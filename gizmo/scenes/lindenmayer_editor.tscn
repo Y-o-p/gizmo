@@ -1,0 +1,36 @@
+[gd_scene load_steps=3 format=3 uid="uid://cj7uqtjv87yvu"]
+
+[ext_resource type="Script" uid="uid://duqc3frde13on" path="res://scripts/lindenmayer_editor.gd" id="1_h7jkg"]
+[ext_resource type="PackedScene" uid="uid://6qkturaxdr3o" path="res://scenes/command_editor.tscn" id="2_vf8ai"]
+
+[node name="LindenmayerEditor" type="Window"]
+oversampling_override = 1.0
+position = Vector2i(0, 36)
+size = Vector2i(800, 600)
+script = ExtResource("1_h7jkg")
+
+[node name="MarginContainer" type="ScrollContainer" parent="."]
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 796.0
+offset_bottom = 596.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="NameContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="NameLabel" type="Label" parent="MarginContainer/VBoxContainer/NameContainer"]
+layout_mode = 2
+text = "Name "
+
+[node name="NameEdit" type="LineEdit" parent="MarginContainer/VBoxContainer/NameContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Enter Name"
+
+[node name="CommandEditor" parent="MarginContainer/VBoxContainer" instance=ExtResource("2_vf8ai")]
+layout_mode = 2

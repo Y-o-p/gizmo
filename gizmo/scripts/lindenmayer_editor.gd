@@ -1,0 +1,2 @@
+extends Window
+class_name LindenmayerEditor
