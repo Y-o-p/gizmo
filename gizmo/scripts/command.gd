@@ -169,29 +169,22 @@ func split(amount: float):
 	model.tool.update_face_vertex(selection.face_id, left_midpoint, new_vertex_id)
 	model.tool.update_face_vertex(connected_face_id, right_midpoint, new_vertex_id)
 
+
 func pull():
 	# Create a new vertex on top of the currently selected vertex
 	var selected_vertex_id = selection.get_selected_vertex()
 	var new_vertex_id = model.tool.add_vertex(model.tool.positions[selected_vertex_id])
-
-	# Connect the selected face to the new vertex
-	model.tool.faces[selection.face_id][(selection.edge + selection.vertex) % 3] = new_vertex_id
 	
 	# The other two vertices
-	var other_ids = selection.get_selected_face_vertices().duplicate()
-	other_ids.erase(new_vertex_id)
-
-	# Remove the old edges
-	model.tool.edges[model.tool.get_edge_id(other_ids[0], selected_vertex_id)].erase(selection.face_id)
-	model.tool.edges[model.tool.get_edge_id(other_ids[1], selected_vertex_id)].erase(selection.face_id)
+	var selected_vertex_index = (selection.edge + selection.vertex) % 3
+	var unselected_ids = Helpers.wrapping_slice(selection.get_selected_face_vertices(), selected_vertex_index + 1, selected_vertex_index + 3)
 
 	# Create the side faces
-	model.tool.add_face(new_vertex_id, selected_vertex_id, other_ids[0])
-	model.tool.add_face(new_vertex_id, other_ids[1], selected_vertex_id)
+	model.tool.add_face(new_vertex_id, selected_vertex_id, unselected_ids[0])
+	model.tool.add_face(new_vertex_id, unselected_ids[1], selected_vertex_id)
 
-	# Add the new edges
-	model.tool.edges[model.tool.get_edge_id(other_ids[0], new_vertex_id)].append(selection.face_id)
-	model.tool.edges[model.tool.get_edge_id(other_ids[1], new_vertex_id)].append(selection.face_id)
+	# Connect the selected face to the new vertex
+	model.tool.update_face_vertex(selection.face_id, selected_vertex_index, new_vertex_id)
 
 	# Rebuild the model
 	selection.model.rebuild_model()
