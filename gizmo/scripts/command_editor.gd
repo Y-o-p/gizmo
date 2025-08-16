@@ -7,7 +7,7 @@ var stored_command: CallableReference
 var _command_name := "":
 	set(val):
 		_command_name = val
-		%NameLabel.text = _command_name.replace("_", " ").to_pascal_case()
+		%NameLabel.text = _command_name.capitalize()
 
 
 func _ready():
