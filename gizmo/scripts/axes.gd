@@ -1,7 +1,7 @@
 extends Node2D
 
 
-var _set_3d_axis_visibility := func(visible: bool): pass
+var _set_3d_axis_visibility := func(_enabled: bool): pass
 
 func _ready():
 	_create_3d_axes()
@@ -19,12 +19,12 @@ func _create_3d_axes():
 	var z_end = 10000 * Vector3.FORWARD
 	var z_line = Draw3D.line(z_start, z_end, Color("bb7f57"), false)
 	add_child(z_line)
-	_set_3d_axis_visibility = func(visible: bool):
-		x_line.visible = visible
-		y_line.visible = visible
-		z_line.visible = visible
+	_set_3d_axis_visibility = func(enabled: bool):
+		x_line.visible = enabled
+		y_line.visible = enabled
+		z_line.visible = enabled
 
-func _process(delta):
+func _process(_delta):
 	queue_redraw()
 
 func _draw():
