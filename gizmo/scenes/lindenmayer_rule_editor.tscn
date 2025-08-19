@@ -1,0 +1,78 @@
+[gd_scene load_steps=3 format=3 uid="uid://bugen5iclrwgq"]
+
+[ext_resource type="Script" uid="uid://c63qeus5xvus2" path="res://scripts/lindenmayer_rule_editor.gd" id="1_t7io5"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2jah4"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.22352941, 0.22352941, 0.22352941, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
+[node name="LindenmayerRuleEditor" type="PanelContainer"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 203.0
+grow_horizontal = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_2jah4")
+script = ExtResource("1_t7io5")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 25
+theme_override_constants/margin_top = 25
+theme_override_constants/margin_right = 25
+theme_override_constants/margin_bottom = 25
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="RuleContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
+size_flags_stretch_ratio = 0.55
+
+[node name="Variable" type="Label" parent="MarginContainer/HBoxContainer/RuleContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "A"
+horizontal_alignment = 1
+
+[node name="Label" type="Label" parent="MarginContainer/HBoxContainer/RuleContainer"]
+layout_mode = 2
+text = "becomes"
+horizontal_alignment = 1
+
+[node name="Mutation" type="LineEdit" parent="MarginContainer/HBoxContainer/RuleContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "AB"
+alignment = 1
+
+[node name="PanelContainer" type="PanelContainer" parent="MarginContainer/HBoxContainer/RuleContainer"]
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+
+[node name="FocusHereToAddCommands" type="Label" parent="MarginContainer/HBoxContainer/RuleContainer/PanelContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 1
+focus_mode = 2
+mouse_filter = 1
+theme_override_colors/font_color = Color(0.5449743, 0.54497427, 0.54497427, 1)
+text = "Focus Here to Add Commands"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CommandContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0

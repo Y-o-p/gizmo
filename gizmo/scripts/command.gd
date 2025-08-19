@@ -17,6 +17,7 @@ var finish_line: int = 0:
 	set(val):
 		finish_line = clamp(val, 0, commands.size())
 var macro_recording = null
+var l_systems: Dictionary[String, LindenmayerSystem]
 
 @onready var KEY_TO_COMMAND: Dictionary = _get_event_to_command_dict()
 
@@ -201,6 +202,25 @@ func run_macro():
 			return "Macro doesn't exist"
 
 
+func lindenmayer_default_args() -> Array:
+	return ["", 1]
+
+
+func lindenmayer(system_name: String, iterations: int):
+	if not l_systems.has(system_name):
+		return "System doesn't exist with name %s" % system_name
+
+	if iterations < 1:
+		return "Must have one or more iterations"
+	
+	var system: LindenmayerSystem = l_systems[system_name]
+	var sequence: String = system.axiom
+	for i in range(iterations):
+		sequence = system.get_next_sequence(sequence)
+	
+	system.execute_sequence(sequence)
+
+
 ################################################################################
 
 
@@ -289,21 +309,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		finish_line -= 1
 	elif event.is_action_pressed("ui_down"):
 		finish_line += 1
-	elif event.is_action_pressed("ui_right"):
-		var system := LindenmayerSystem.new()
-		system.constants = {
-			"F": func (command: Command):
-				command.translate(Vector3(0.25, 0.25, 0.25)),
-		}
-		system.production_rules = {
-			"A": "DFJ",
-		}
-		var sequence = system.get_next_sequence("A")
-		for i in range(5):
-			sequence = system.get_next_sequence(sequence)
-		
-		print(sequence)
-		system.execute_sequence(sequence, self)
 	elif event.is_action_pressed("create_lindenmayer"):
 		var lindenmayer_editor = Scenes.LINDENMAYER_EDITOR.instantiate()
 		add_child(lindenmayer_editor)

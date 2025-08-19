@@ -17,6 +17,11 @@ func _init(initial_value: Variant) -> void:
 				return String.num_scientific(new_value)
 			string_to_value = func (string: String) -> float:
 				return string.to_float()
+		TYPE_INT:
+			value_to_string = func (new_value: int) -> String:
+				return String.num_int64(new_value)
+			string_to_value = func (string: String) -> float:
+				return string.to_int()
 		_:
 			push_error("value_edit doesn't support type %s" % type)
 			return

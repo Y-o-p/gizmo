@@ -1,19 +1,23 @@
-[gd_scene load_steps=3 format=3 uid="uid://cj7uqtjv87yvu"]
+[gd_scene load_steps=2 format=3 uid="uid://cj7uqtjv87yvu"]
 
 [ext_resource type="Script" uid="uid://duqc3frde13on" path="res://scripts/lindenmayer_editor.gd" id="1_h7jkg"]
-[ext_resource type="PackedScene" uid="uid://6qkturaxdr3o" path="res://scenes/command_editor.tscn" id="2_vf8ai"]
 
 [node name="LindenmayerEditor" type="Window"]
 oversampling_override = 1.0
+title = "Lindenmayer-System Editor"
 position = Vector2i(0, 36)
-size = Vector2i(800, 600)
 script = ExtResource("1_h7jkg")
 
-[node name="MarginContainer" type="ScrollContainer" parent="."]
-offset_left = 4.0
-offset_top = 4.0
-offset_right = 796.0
-offset_bottom = 596.0
+[node name="MarginContainer" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
@@ -28,9 +32,44 @@ layout_mode = 2
 text = "Name "
 
 [node name="NameEdit" type="LineEdit" parent="MarginContainer/VBoxContainer/NameContainer"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 placeholder_text = "Enter Name"
 
-[node name="CommandEditor" parent="MarginContainer/VBoxContainer" instance=ExtResource("2_vf8ai")]
+[node name="SaveButton" type="Button" parent="MarginContainer/VBoxContainer/NameContainer"]
 layout_mode = 2
+text = "Save"
+
+[node name="AxiomContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/AxiomContainer"]
+layout_mode = 2
+text = "Axiom"
+
+[node name="Axiom" type="LineEdit" parent="MarginContainer/VBoxContainer/AxiomContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Enter Axiom"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="RuleContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ScrollContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+focus_behavior_recursive = 2
+
+[node name="AddRuleButton" type="Button" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "+"
+
+[node name="Label" type="Label" parent="."]
+offset_right = 40.0
+offset_bottom = 23.0
+
+[connection signal="pressed" from="MarginContainer/VBoxContainer/NameContainer/SaveButton" to="." method="_on_save_button_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/AddRuleButton" to="." method="_on_add_rule_button_pressed"]
