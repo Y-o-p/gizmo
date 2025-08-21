@@ -1,5 +1,5 @@
 extends Node
 
-var command: Command
+var interpreter: Interpreter
 
 signal face_selection_made(selection)

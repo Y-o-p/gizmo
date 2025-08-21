@@ -1,6 +1,6 @@
 extends Camera3D
 
-@export var command: Command
+@export var interpreter: Interpreter
 @export var distance: float = 5
 @export_range(0.0, 1.0) var mouse_sensitivity = 0.01
 @onready var _camera_pivot = get_parent()
@@ -25,8 +25,8 @@ func _process(delta) -> void:
 	size = _current_size
 	
 	# Calculating desired position based on the current selection
-	var face_vertices: Array = command.selection.get_selected_face_vertices()
-	var vertex_positions: Array = face_vertices.map(func(x): return command.model.tool.positions[x])
+	var face_vertices: Array = interpreter.selection.get_selected_face_vertices()
+	var vertex_positions: Array = face_vertices.map(func(x): return interpreter.model.tool.positions[x])
 	_desired_position = vertex_positions.reduce(func(x, y): return x + y) / 3.0
 	
 	# Smoothly interpolate between the current position and the desired position

@@ -1,8 +1,8 @@
 extends MarginContainer
 
 func _ready() -> void:
-	User.command.invalid_command.connect(_on_invalid_command)
-	User.command.started_command.connect(_on_command_started)
+	User.interpreter.invalid_command.connect(_on_invalid_command)
+	User.interpreter.started_command.connect(_on_command_started)
 
 func _on_invalid_command(error: String):
 	var label = Label.new()

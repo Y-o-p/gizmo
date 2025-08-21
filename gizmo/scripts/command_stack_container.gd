@@ -4,12 +4,12 @@ extends VBoxContainer
 
 
 func _ready() -> void:
-	User.command.command_completed.connect.call_deferred(_on_command_completed)
-	User.command.commands_refreshed.connect.call_deferred(_on_commands_refreshed)
+	User.interpreter.command_completed.connect.call_deferred(_on_command_completed)
+	User.interpreter.commands_refreshed.connect.call_deferred(_on_commands_refreshed)
 
 
 func _process(delta: float) -> void:
-	move_child(finish_line, User.command.finish_line)
+	move_child(finish_line, User.interpreter.finish_line)
 
 
 func _on_commands_refreshed():
@@ -20,7 +20,7 @@ func _on_commands_refreshed():
 		remove_child(child)
 		child.queue_free()
 	
-	for command_reference in User.command.commands:
+	for command_reference in User.interpreter.commands:
 		_on_command_completed(command_reference)
 
 
@@ -28,7 +28,7 @@ func _on_command_completed(ref: CallableReference):
 	var command_editor: CommandEditor = Scenes.COMMAND_EDITOR.instantiate()
 	command_editor.stored_command = ref
 	command_editor.parameters_changed.connect(func ():
-		User.command.reset()
-		User.command.call_commands_thus_far()
+		User.interpreter.reset()
+		User.interpreter.call_commands_thus_far()
 	)
 	add_child(command_editor)

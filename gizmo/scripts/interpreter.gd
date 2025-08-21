@@ -1,5 +1,5 @@
 extends Node
-class_name Command
+class_name Interpreter
 
 @export var model: Model
 
@@ -22,14 +22,14 @@ var l_systems: Dictionary[String, LindenmayerSystem]
 @onready var KEY_TO_COMMAND: Dictionary = _get_event_to_command_dict()
 
 
-func interpret_command_resource(command_resource: CommandStack.CommandResource):
+func interpret_command_resource(command_resource: Command):
 	if not KEY_TO_COMMAND.has(command_resource.function_name):
 		return "Command doesn't exist"
 	
 	return KEY_TO_COMMAND[command_resource.function_name].bindv(command_resource.arguments)
 
 
-func interpret_command_resources(command_strings: Array[CommandStack.CommandResource]) -> Array:
+func interpret_command_resources(command_strings: Array[Command]) -> Array:
 	var result = []
 	for command in command_strings:
 		result.push_back(interpret_command_resource(command))
@@ -276,7 +276,7 @@ func _get_event_to_command_dict():
 
 func _ready() -> void:
 	# Tell the singleton to set the command to self
-	User.command = self
+	User.interpreter = self
 	call_deferred("load_command_stack", stack)
 
 
@@ -347,7 +347,7 @@ func _completed_command(command: CallableReference):
 	if macro_recording is PackedStringArray:
 		macro_recording.append(command.callable.get_method())
 	
-	stack.commands.insert(finish_line, CommandStack.CommandResource.from_callable(command.callable))
+	stack.commands.insert(finish_line, Command.from_callable(command.callable))
 	commands.insert(finish_line, command)
 	command_completed.emit(command)
 	finish_line += 1
