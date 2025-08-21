@@ -33,7 +33,7 @@ func _ready():
 			line_edit.text_changed.connect(func (new_text: String):
 				var new_args = stored_command.callable.get_bound_arguments()
 				new_args[i] = new_text
-				stored_command.callable = Callable(User.command, _command_name).bindv(new_args)
+				stored_command.callable = Callable(User.interpreter, _command_name).bindv(new_args)
 				parameters_changed.emit()
 				print(stored_command.callable.get_bound_arguments())
 			)
@@ -48,7 +48,7 @@ func _ready():
 			int_edit.value_changed.connect(func (new_int: int):
 				var new_args = stored_command.callable.get_bound_arguments()
 				new_args[i] = new_int
-				stored_command.callable = Callable(User.command, _command_name).bindv(new_args)
+				stored_command.callable = Callable(User.interpreter, _command_name).bindv(new_args)
 				parameters_changed.emit()
 			)
 			container.add_child(int_edit)
@@ -62,7 +62,7 @@ func _ready():
 			float_edit.value_changed.connect(func (new_float: float):
 				var new_args = stored_command.callable.get_bound_arguments()
 				new_args[i] = new_float
-				stored_command.callable = Callable(User.command, _command_name).bindv(new_args)
+				stored_command.callable = Callable(User.interpreter, _command_name).bindv(new_args)
 				parameters_changed.emit()
 			)
 			container.add_child(float_edit)
@@ -80,7 +80,7 @@ func _ready():
 					var current_vector: Vector3 = stored_command.callable.get_bound_arguments()[i]
 					current_vector[j] = new_float
 					args[i] = current_vector
-					stored_command.callable = Callable(User.command, _command_name).bindv(args)
+					stored_command.callable = Callable(User.interpreter, _command_name).bindv(args)
 					parameters_changed.emit()
 				)
 				container.add_child(float_edit)

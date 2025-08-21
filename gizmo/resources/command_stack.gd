@@ -1,5 +1,5 @@
-extends Resource
-class_name CommandStack
+class_name CommandStack extends Resource
 
-@export var commands: Array[Command]
-@export var macros: Dictionary
+@export var command_names: PackedStringArray
+@export var command_args: Array
+@export var macros: PackedStringArray

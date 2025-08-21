@@ -11,8 +11,8 @@ signal invalid_command(error: String)
 var selection_stack: Array[Selection]
 var selection: Selection
 
-var stack: CommandStack = preload("res://resources/cube.tres")
-var commands: Array = []
+var stack: CommandStack
+var commands: Array[CallableReference] = []
 var finish_line: int = 0:
 	set(val):
 		finish_line = clamp(val, 0, commands.size())
@@ -22,31 +22,13 @@ var l_systems: Dictionary[String, LindenmayerSystem]
 @onready var KEY_TO_COMMAND: Dictionary = _get_event_to_command_dict()
 
 
-func interpret_command_resource(command_resource: Command):
-	if not KEY_TO_COMMAND.has(command_resource.function_name):
-		return "Command doesn't exist"
-	
-	return KEY_TO_COMMAND[command_resource.function_name].bindv(command_resource.arguments)
-
-
-func interpret_command_resources(command_strings: Array[Command]) -> Array:
-	var result = []
-	for command in command_strings:
-		result.push_back(interpret_command_resource(command))
-	
-	return result
-
-
 func call_commands_thus_far():
 	for command in commands:
-		if command is String:
+		if not command.callable.is_valid():
 			break
-		elif command is CallableReference:
-			if not command.callable.is_valid():
-				break
-			
-			if command.callable.call() is String:
-				break
+		
+		if command.callable.call() is String:
+			break
 	
 	# Properties be like: nothing to see here <:^)
 	finish_line = finish_line
@@ -56,7 +38,10 @@ func load_command_stack(command_stack: CommandStack):
 	reset()
 	stack = command_stack
 	
-	commands = interpret_command_resources(command_stack.commands)
+	commands.resize(command_stack.command_names.size())
+	for i in range(command_stack.command_names.size()):
+		commands[i] = CallableReference.new(Callable(self, command_stack.command_names[i]).bindv(command_stack.command_args[i]))
+
 	call_commands_thus_far()
 	commands_refreshed.emit()
 
@@ -192,14 +177,15 @@ func pull():
 
 
 func run_macro():
-	return func(macro_name: String):
-		var macro
-		if macro_name in Macros.STANDARD_MACROS.keys():
-			macro = Macros.STANDARD_MACROS[macro_name]
-		elif macro_name in stack.macros.keys():
-			macro = stack.macros[macro_name]
-		else:
-			return "Macro doesn't exist"
+	pass
+	#return func(macro_name: String):
+		#var macro
+		#if macro_name in Macros.STANDARD_MACROS.keys():
+			#macro = Macros.STANDARD_MACROS[macro_name]
+		#elif macro_name in stack.macros.keys():
+			#macro = stack.macros[macro_name]
+		#else:
+			#return "Macro doesn't exist"
 
 
 func lindenmayer_default_args() -> Array:
@@ -230,7 +216,8 @@ func pop():
 	
 	finish_line -= 1
 	commands.remove_at(finish_line)
-	stack.commands.remove_at(finish_line)
+	stack.command_names.remove_at(finish_line)
+	stack.command_args.remove_at(finish_line)
 	if macro_recording is PackedStringArray:
 		macro_recording.remove_at(macro_recording.size() - 1)
 
@@ -277,7 +264,7 @@ func _get_event_to_command_dict():
 func _ready() -> void:
 	# Tell the singleton to set the command to self
 	User.interpreter = self
-	call_deferred("load_command_stack", stack)
+	load_command_stack(CommandStack.new())
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -285,7 +272,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		for macro_name in stack.macros:
 			var macro := Macro.new()
 			macro.macro_name = macro_name
-			macro.commands = stack.macros[macro_name]
+			#macro.commands = stack.macros[macro_name]
 			var path = "user://%s.tres" % macro_name
 			ResourceSaver.save(macro, path)
 	elif event.is_action_pressed("save"):
@@ -300,7 +287,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("macro"):
 		if macro_recording is PackedStringArray:
 			started_command.emit(func(macro_name: String):
-				stack.macros[macro_name] = macro_recording
+				#stack.macros[macro_name] = macro_recording
 				macro_recording = null
 			)
 		elif macro_recording == null:
@@ -347,7 +334,8 @@ func _completed_command(command: CallableReference):
 	if macro_recording is PackedStringArray:
 		macro_recording.append(command.callable.get_method())
 	
-	stack.commands.insert(finish_line, Command.from_callable(command.callable))
+	stack.command_names.insert(finish_line, command.callable.get_method())
+	stack.command_args.insert(finish_line, command.callable.get_bound_arguments())
 	commands.insert(finish_line, command)
 	command_completed.emit(command)
 	finish_line += 1
