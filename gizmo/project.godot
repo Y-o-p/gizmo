@@ -23,10 +23,15 @@ Scenes="*res://globals/scenes.gd"
 Draw3D="*res://globals/draw_3d.gd"
 Macros="*res://scripts/macros.gd"
 Helpers="*res://scripts/helpers.gd"
+uuid="*res://addons/uuid/uuid.gd"
 
 [display]
 
 window/subwindows/embed_subwindows=false
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/uuid/plugin.cfg")
 
 [file_customization]
 
