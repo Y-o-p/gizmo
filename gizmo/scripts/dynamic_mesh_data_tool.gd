@@ -1,7 +1,6 @@
 extends RefCounted
 class_name DynamicMeshDataTool
 
-
 var vertex_attribute_flags: int
 
 
