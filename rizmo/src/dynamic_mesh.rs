@@ -133,8 +133,26 @@ impl DynamicMesh {
     }
 
     #[func]
-    fn modify_vertex(&mut self, meta_index_id: MetaIndexId) {
-
+    fn modify_vertex(&mut self, meta_index_id: MetaIndexId, position: Vector3) {
+        // It's not enough to update a single vertex
+        // Some vertices are "tied," they have the same position but different attributes
+        // This algorithm navigates all tied vertices and updates them.
+        // Traverse the shape until we arrive where we started.
+        
+        let starting_meta_index = *self.tracked_indices.get(&meta_index_id).unwrap();
+        let mut next_meta_index = starting_meta_index;
+        let mut update_next_vertex = ||{
+            self.positions[self.indices[next_meta_index as usize] as usize] = position;
+            next_meta_index = self.connections[next_meta_index as usize];
+            let face_offset = next_meta_index % 3;
+            let next_edge = (face_offset + 1) % 3;
+            next_meta_index = next_meta_index - face_offset + next_edge;
+            return next_meta_index;
+        };
+        let mut next = update_next_vertex();
+        while next != starting_meta_index {
+            next = update_next_vertex();
+        }
     }
 }
 
