@@ -1,10 +1,10 @@
 use std::collections::HashMap;
-use std::hash::{Hash, Hasher, DefaultHasher};
 
 use godot::prelude::*;
-use godot::classes::*;
-use godot::classes::rendering_server::PrimitiveType;
+use godot::classes::{RenderingServer, rendering_server::PrimitiveType};
 
+
+type MetaIndexId = i32;
 
 // The idea is to maximize performance by leveraging Godot's RenderingServer
 // and minimizing memory allocations.
@@ -25,6 +25,8 @@ struct DynamicMesh {
     #[var]
     instance_rid: Rid,
     index: usize,
+    tracked_indices: HashMap<MetaIndexId, i32>,
+    last_meta_index_id: MetaIndexId,
     base: Base<Node3D>,
 }
 
@@ -44,6 +46,8 @@ impl INode3D for DynamicMesh {
             mesh_rid: mesh_rid,
             instance_rid: instance_rid,
             index: 0,
+            tracked_indices: HashMap::new(),
+            last_meta_index_id: 0,
             base: base,
         };
 
@@ -73,10 +77,10 @@ impl DynamicMesh {
     }
 
     #[func]
-    fn submit(&mut self) {
+    fn submit_new_geometry(&self) {
         let mut rs = RenderingServer::singleton();
         rs.mesh_clear(self.mesh_rid);
-        let mut surface = varray!(
+        let surface = varray!(
             self.positions.clone(), // Positions (Vector3)
             Variant::nil(),
             Variant::nil(),
@@ -93,12 +97,45 @@ impl DynamicMesh {
         );
         rs.mesh_add_surface_from_arrays(self.mesh_rid, PrimitiveType::TRIANGLES, &surface);
     }
+
+    #[func]
+    fn submit_updated_positions(&self, index: i32, size: i32) {
+        let positions_as_bytes = self.positions.subarray(index.try_into().unwrap(), size.try_into().unwrap()).to_byte_array();
+
+        let mut rs = RenderingServer::singleton();
+        rs.mesh_surface_update_vertex_region(self.mesh_rid, 0, 3 * 4 * size, &positions_as_bytes);
+    }
+
+    #[func]
+    fn track_index(&mut self, meta_index: i32) -> MetaIndexId {
+        let new_meta_index_id = self.last_meta_index_id;
+        self.last_meta_index_id += 1;
+
+        if meta_index > (self.indices.len() - 1).try_into().unwrap() {
+            panic!("meta_index can't be larger than the number of indices.");
+        }
+
+        self.tracked_indices.insert(new_meta_index_id, meta_index);
+
+        new_meta_index_id
+    }
+
+    #[func]
+    fn traverse_connection(&mut self, meta_index_id: MetaIndexId) {
+        self.tracked_indices.insert(meta_index_id, self.connections[self.tracked_indices[&meta_index_id].try_into().unwrap()]);
+    }
+
+    #[func]
+    fn modify_vertex(&mut self, meta_index_id: MetaIndexId) {
+
+    }
 }
 
 impl Drop for DynamicMesh {
     fn drop(&mut self) {
         let mut rs = RenderingServer::singleton();
-        rs.mesh_clear(self.mesh_rid);
+        rs.free_rid(self.mesh_rid);
+        rs.free_rid(self.instance_rid);
         godot_print!("Bye bye Gizmo");
     }
 }
