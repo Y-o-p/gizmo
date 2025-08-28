@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://b02ts77s0gy1p"]
+
+[ext_resource type="Script" uid="uid://cdwgkuy456ajn" path="res://test.gd" id="1_37kl0"]
+
+[sub_resource type="Environment" id="Environment_37kl0"]
+
+[node name="test" type="Node3D"]
+script = ExtResource("1_37kl0")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(0.7875485, 0, 0.61625266, 0, 1, 0, -0.61625266, 0, 0.7875485, 1.1422206, 0.36713558, 1.3540583)
+environment = SubResource("Environment_37kl0")
+current = true
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.360762, 0.9326579, 0, -0.9326579, 0.360762, 0, 0, 0)
