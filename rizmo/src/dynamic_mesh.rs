@@ -100,10 +100,12 @@ impl DynamicMesh {
 
     #[func]
     fn submit_updated_positions(&self, index: i32, size: i32) {
-        let positions_as_bytes = self.positions.subarray(index.try_into().unwrap(), size.try_into().unwrap()).to_byte_array();
+        let i: usize = index.try_into().unwrap();
+        let s: usize = size.try_into().unwrap();
+        let positions_as_bytes = self.positions.subarray(i, i + s).to_byte_array();
 
         let mut rs = RenderingServer::singleton();
-        rs.mesh_surface_update_vertex_region(self.mesh_rid, 0, 3 * 4 * size, &positions_as_bytes);
+        rs.mesh_surface_update_vertex_region(self.mesh_rid, 0, 3 * 4 * index, &positions_as_bytes);
     }
 
     #[func]
@@ -123,6 +125,11 @@ impl DynamicMesh {
     #[func]
     fn traverse_connection(&mut self, meta_index_id: MetaIndexId) {
         self.tracked_indices.insert(meta_index_id, self.connections[self.tracked_indices[&meta_index_id].try_into().unwrap()]);
+    }
+
+    #[func]
+    fn get_meta_index(&self, meta_index_id: MetaIndexId) -> i32 {
+        *self.tracked_indices.get(&meta_index_id).unwrap()
     }
 
     #[func]
