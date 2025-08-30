@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
-use godot::prelude::*;
 use godot::classes::{RenderingServer, rendering_server::PrimitiveType};
-
+use godot::prelude::*;
 
 type MetaIndexId = i32;
 
@@ -30,7 +29,6 @@ struct DynamicMesh {
     base: Base<Node3D>,
 }
 
-
 #[godot_api]
 impl INode3D for DynamicMesh {
     fn init(base: Base<Node3D>) -> Self {
@@ -39,7 +37,7 @@ impl INode3D for DynamicMesh {
         let mesh_rid = rs.mesh_create();
         let instance_rid = rs.instance_create();
         rs.instance_set_base(instance_rid, mesh_rid);
-        let mut new_self = Self {
+        let new_self = Self {
             positions: PackedVector3Array::new(),
             indices: PackedInt32Array::new(),
             connections: PackedInt32Array::new(),
@@ -51,19 +49,37 @@ impl INode3D for DynamicMesh {
             base: base,
         };
 
-        new_self.positions.resize(64);
         new_self
     }
 
     fn ready(&mut self) {
         let mut rs = RenderingServer::singleton();
-        rs.instance_set_scenario(self.instance_rid, self.base().get_world_3d().unwrap().get_scenario());
-
+        rs.instance_set_scenario(
+            self.instance_rid,
+            self.base().get_world_3d().unwrap().get_scenario(),
+        );
     }
 }
 
 #[godot_api]
 impl DynamicMesh {
+    #[func]
+    fn reset(&mut self) {
+        self.positions.resize(64);
+        self.positions.as_mut_slice()[0..4].copy_from_slice(&[
+            Vector3::new(0.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, 1.0),
+            Vector3::new(0.0, 1.0, 0.0),
+            Vector3::new(1.0, 0.0, 0.0),
+        ]);
+
+        self.indices = PackedInt32Array::from(&[0, 2, 1, 0, 1, 3, 0, 3, 2, 3, 1, 2]);
+        self.connections = PackedInt32Array::from(&[8, 10, 3, 2, 9, 6, 5, 11, 0, 4, 1, 7]);
+        self.index = 0;
+        self.tracked_indices.clear();
+        self.last_meta_index_id = 0;
+    }
+
     #[func]
     fn add_vertex(&mut self, position: Vector3) {
         self.positions[self.index] = position;
@@ -71,9 +87,19 @@ impl DynamicMesh {
     }
 
     #[func]
-    fn add_face(&mut self, index_a: i32, index_b: i32, index_c: i32, conn_a: i32, conn_b: i32, conn_c: i32) {
-        self.indices.extend_array(&PackedInt32Array::from(&[index_a, index_b, index_c]));
-        self.connections.extend_array(&PackedInt32Array::from(&[conn_a, conn_b, conn_c]));
+    fn add_face(
+        &mut self,
+        index_a: i32,
+        index_b: i32,
+        index_c: i32,
+        conn_a: i32,
+        conn_b: i32,
+        conn_c: i32,
+    ) {
+        self.indices
+            .extend_array(&PackedInt32Array::from(&[index_a, index_b, index_c]));
+        self.connections
+            .extend_array(&PackedInt32Array::from(&[conn_a, conn_b, conn_c]));
     }
 
     #[func]
@@ -124,7 +150,10 @@ impl DynamicMesh {
 
     #[func]
     fn traverse_connection(&mut self, meta_index_id: MetaIndexId) {
-        self.tracked_indices.insert(meta_index_id, self.connections[self.tracked_indices[&meta_index_id].try_into().unwrap()]);
+        self.tracked_indices.insert(
+            meta_index_id,
+            self.connections[self.tracked_indices[&meta_index_id].try_into().unwrap()],
+        );
     }
 
     #[func]
@@ -138,10 +167,10 @@ impl DynamicMesh {
         // Some vertices are "tied," they have the same position but different attributes
         // This algorithm navigates all tied vertices and updates them.
         // Traverse the shape until we arrive where we started.
-        
+
         let starting_meta_index = *self.tracked_indices.get(&meta_index_id).unwrap();
         let mut next_meta_index = starting_meta_index;
-        let mut update_next_vertex = ||{
+        let mut update_next_vertex = || {
             self.positions[self.indices[next_meta_index as usize] as usize] = position;
             next_meta_index = self.connections[next_meta_index as usize];
             let face_offset = next_meta_index % 3;
@@ -161,6 +190,5 @@ impl Drop for DynamicMesh {
         let mut rs = RenderingServer::singleton();
         rs.free_rid(self.mesh_rid);
         rs.free_rid(self.instance_rid);
-        godot_print!("Bye bye Gizmo");
     }
 }
