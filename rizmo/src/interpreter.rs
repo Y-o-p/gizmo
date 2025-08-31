@@ -118,7 +118,20 @@ impl INode for Interpreter {
 #[godot_api]
 impl Interpreter {
     #[func]
-    fn call_commands(&self) {}
+    fn reset(&mut self) {
+        self.mesh.bind_mut().deref_mut().reset();
+        self.selections.clear();
+        self.selections
+            .push(self.mesh.bind_mut().deref_mut().track_index(0));
+
+        self.call_commands();
+    }
+
+    fn call_commands(&mut self) {
+        for command in self.commands.iter() {
+            command.call(self.mesh.bind_mut().deref_mut(), &mut self.selections);
+        }
+    }
 
     #[func]
     fn push_selection(&mut self) {
