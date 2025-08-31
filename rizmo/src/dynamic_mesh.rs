@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use godot::classes::{RenderingServer, rendering_server::PrimitiveType};
 use godot::prelude::*;
 
-type MetaIndexId = i32;
+pub type MetaIndexId = i32;
 
 // The idea is to maximize performance by leveraging Godot's RenderingServer
 // and minimizing memory allocations.
@@ -12,19 +12,19 @@ type MetaIndexId = i32;
 // gives it to Godot, and then subsequent updates to the mesh are done through RenderingServer.mesh_surface_update_*_region.
 #[derive(GodotClass)]
 #[class(base=Node3D)]
-struct DynamicMesh {
+pub struct DynamicMesh {
     #[var]
-    positions: PackedVector3Array,
+    pub positions: PackedVector3Array,
     #[var]
-    indices: PackedInt32Array,
+    pub indices: PackedInt32Array,
     #[var]
-    connections: PackedInt32Array,
+    pub connections: PackedInt32Array,
     #[var]
     mesh_rid: Rid,
     #[var]
     instance_rid: Rid,
     index: usize,
-    tracked_indices: HashMap<MetaIndexId, i32>,
+    pub tracked_indices: HashMap<MetaIndexId, i32>,
     last_meta_index_id: MetaIndexId,
     base: Base<Node3D>,
 }
@@ -62,9 +62,9 @@ impl INode3D for DynamicMesh {
 }
 
 #[godot_api]
-impl DynamicMesh {
+pub impl DynamicMesh {
     #[func]
-    fn reset(&mut self) {
+    pub fn reset(&mut self) {
         self.positions.resize(64);
         self.positions.as_mut_slice()[0..4].copy_from_slice(&[
             Vector3::new(0.0, 0.0, 0.0),
@@ -80,30 +80,31 @@ impl DynamicMesh {
         self.last_meta_index_id = 0;
     }
 
-    #[func]
-    fn add_vertex(&mut self, position: Vector3) {
-        self.positions[self.index] = position;
+    pub fn add_vertex(&mut self, position: Vector3) -> usize {
+        let index = self.index;
+        self.positions[index] = position;
         self.index += 1;
+        return index;
     }
 
     #[func]
-    fn add_face(
-        &mut self,
-        index_a: i32,
-        index_b: i32,
-        index_c: i32,
-        conn_a: i32,
-        conn_b: i32,
-        conn_c: i32,
-    ) {
-        self.indices
-            .extend_array(&PackedInt32Array::from(&[index_a, index_b, index_c]));
+    pub fn add_faces(&mut self, indices: [i32; 6], connections: [i32; 6]) {
+        self.indices.extend_array(&PackedInt32Array::from(&indices));
+
+        let connections_length = self.connections.len();
         self.connections
-            .extend_array(&PackedInt32Array::from(&[conn_a, conn_b, conn_c]));
+            .extend_array(&PackedInt32Array::from(&connections));
+
+        for (offset, connection) in connections.iter().enumerate() {
+            if *connection > (connections_length - 1) as i32 {
+                continue;
+            }
+            self.connections[*connection as usize] = (connections_length - 1 + offset) as i32;
+        }
     }
 
     #[func]
-    fn submit_new_geometry(&self) {
+    pub fn submit_new_geometry(&self) {
         let mut rs = RenderingServer::singleton();
         rs.mesh_clear(self.mesh_rid);
         let surface = varray!(
@@ -125,7 +126,7 @@ impl DynamicMesh {
     }
 
     #[func]
-    fn submit_updated_positions(&self, index: i32, size: i32) {
+    pub fn submit_updated_positions(&self, index: i32, size: i32) {
         let i: usize = index.try_into().unwrap();
         let s: usize = size.try_into().unwrap();
         let positions_as_bytes = self.positions.subarray(i, i + s).to_byte_array();
@@ -135,7 +136,7 @@ impl DynamicMesh {
     }
 
     #[func]
-    fn track_index(&mut self, meta_index: i32) -> MetaIndexId {
+    pub fn track_index(&mut self, meta_index: i32) -> MetaIndexId {
         let new_meta_index_id = self.last_meta_index_id;
         self.last_meta_index_id += 1;
 
@@ -149,7 +150,7 @@ impl DynamicMesh {
     }
 
     #[func]
-    fn traverse_connection(&mut self, meta_index_id: MetaIndexId) {
+    pub fn traverse_connection(&mut self, meta_index_id: MetaIndexId) {
         self.tracked_indices.insert(
             meta_index_id,
             self.connections[self.tracked_indices[&meta_index_id].try_into().unwrap()],
@@ -157,12 +158,12 @@ impl DynamicMesh {
     }
 
     #[func]
-    fn get_meta_index(&self, meta_index_id: MetaIndexId) -> i32 {
+    pub fn get_meta_index(&self, meta_index_id: MetaIndexId) -> i32 {
         *self.tracked_indices.get(&meta_index_id).unwrap()
     }
 
     #[func]
-    fn modify_vertex(&mut self, meta_index_id: MetaIndexId, position: Vector3) {
+    pub fn modify_vertex(&mut self, meta_index_id: MetaIndexId, position: Vector3) {
         // It's not enough to update a single vertex
         // Some vertices are "tied," they have the same position but different attributes
         // This algorithm navigates all tied vertices and updates them.
