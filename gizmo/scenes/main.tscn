@@ -28,9 +28,9 @@ script = ExtResource("1_tefeu")
 [node name="Interpreter" type="Interpreter" parent="."]
 unique_name_in_owner = true
 
-[node name="ModelOverlay" type="Node" parent="." node_paths=PackedStringArray("interpreter")]
+[node name="ModelOverlay" type="Node" parent="."]
+unique_name_in_owner = true
 script = ExtResource("2_jyhfs")
-interpreter = NodePath("../Interpreter")
 
 [node name="GUI" type="CanvasLayer" parent="."]
 
@@ -76,6 +76,7 @@ script = ExtResource("2_tefeu")
 [node name="CameraPivot" type="Node3D" parent="."]
 
 [node name="Camera3D" type="Camera3D" parent="CameraPivot"]
+unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.179163)
 projection = 1
 size = 1.474

@@ -1,19 +1,14 @@
 extends Node
 class_name ModelOverlay
 
-@export var interpreter: Interpreter
 
 var _meshes = []
-func _process(delta: float) -> void:
-	if Engine.get_process_frames() % 5 != 0:
-		return
-	
+func set_face_vertex_positions(positions: PackedVector3Array):
 	for mesh in _meshes:
 		mesh.queue_free()
 	
 	_meshes.clear()
 
-	var positions := interpreter.mesh.get_face_positions(interpreter.selections.back())
 	# Draw the edge line
 	_meshes.append(Draw3D.line(
 		positions[0],

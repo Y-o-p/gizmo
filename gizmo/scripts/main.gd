@@ -1,5 +1,12 @@
 extends Node
 
+func _process(delta: float):
+	var face_positions = Array(%Interpreter.mesh.get_face_positions(%Interpreter.selections.back()))
+	%Camera3D.desired_position = face_positions.reduce(func(x, y): return x + y) / 3.0
+	
+	if Engine.get_frames_drawn() % 5 == 0:
+		%ModelOverlay.set_face_vertex_positions(face_positions)
+
 func _input(event: InputEvent):
 	if event.is_action_pressed("push_selection"):
 		%Interpreter.push_selection()
