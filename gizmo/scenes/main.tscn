@@ -24,6 +24,9 @@ volumetric_fog_sky_affect = 0.328
 [node name="Main" type="Node"]
 script = ExtResource("1_tefeu")
 
+[node name="Interpreter" type="Interpreter" parent="."]
+unique_name_in_owner = true
+
 [node name="GUI" type="CanvasLayer" parent="."]
 
 [node name="MarginContainer" type="MarginContainer" parent="GUI"]
@@ -73,5 +76,3 @@ projection = 1
 size = 1.474
 near = 0.001
 script = ExtResource("3_o6xl0")
-
-[node name="Interpreter" type="Interpreter" parent="."]

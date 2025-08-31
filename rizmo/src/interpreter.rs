@@ -1,3 +1,5 @@
+use std::ops::DerefMut;
+
 use crate::dynamic_mesh::{DynamicMesh, MetaIndexId};
 use godot::prelude::*;
 
@@ -117,4 +119,55 @@ impl INode for Interpreter {
 impl Interpreter {
     #[func]
     fn call_commands(&self) {}
+
+    #[func]
+    fn push_selection(&mut self) {
+        let command = Command::PushSelection;
+        command.call(self.mesh.bind_mut().deref_mut(), &mut self.selections);
+        self.commands.push(command);
+    }
+    #[func]
+    fn pop_selection(&mut self) {
+        let command = Command::PopSelection;
+        command.call(self.mesh.bind_mut().deref_mut(), &mut self.selections);
+        self.commands.push(command);
+    }
+    #[func]
+    fn move_face_selection(&mut self) {
+        let command = Command::MoveFaceSelection;
+        command.call(self.mesh.bind_mut().deref_mut(), &mut self.selections);
+        self.commands.push(command);
+    }
+    #[func]
+    fn move_edge_selection(&mut self) {
+        let command = Command::MoveEdgeSelection;
+        command.call(self.mesh.bind_mut().deref_mut(), &mut self.selections);
+        self.commands.push(command);
+    }
+    #[func]
+    fn translate(&mut self, delta: Vector3) {
+        let command = Command::Translate(delta);
+        command.call(self.mesh.bind_mut().deref_mut(), &mut self.selections);
+        self.commands.push(command);
+
+        let mut mesh = self.mesh.bind_mut();
+        let len = mesh.deref_mut().positions.len();
+        mesh.deref_mut().submit_updated_positions(0, len as i32);
+    }
+    #[func]
+    fn split(&mut self, amount: f32) {
+        let command = Command::Split(amount);
+        command.call(self.mesh.bind_mut().deref_mut(), &mut self.selections);
+        self.commands.push(command);
+
+        self.mesh.bind_mut().deref_mut().submit_new_geometry();
+    }
+    #[func]
+    fn pull(&mut self) {
+        let command = Command::Pull;
+        command.call(self.mesh.bind_mut().deref_mut(), &mut self.selections);
+        self.commands.push(command);
+
+        self.mesh.bind_mut().deref_mut().submit_new_geometry();
+    }
 }
