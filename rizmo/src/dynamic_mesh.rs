@@ -13,8 +13,11 @@ pub type MetaIndexId = i32;
 #[derive(GodotClass)]
 #[class(init, base=Node3D)]
 pub struct DynamicMesh {
+    #[var]
     pub positions: PackedVector3Array,
+    #[var]
     pub indices: PackedInt32Array,
+    #[var]
     pub connections: PackedInt32Array,
     mesh_rid: Option<Rid>,
     instance_rid: Option<Rid>,
@@ -152,6 +155,19 @@ pub impl DynamicMesh {
     }
 
     #[func]
+    fn get_face_positions(&self, meta_index_id: MetaIndexId) -> PackedVector3Array {
+        let (start, offset) = decompose_meta_index(self.get_meta_index(meta_index_id) as usize);
+        let mut indices = self.indices.subarray(start, start + 3);
+        let indices_rotated = indices.as_mut_slice();
+        indices_rotated.rotate_left(offset);
+        PackedVector3Array::from([
+            self.positions[indices_rotated[0] as usize],
+            self.positions[indices_rotated[1] as usize],
+            self.positions[indices_rotated[2] as usize],
+        ])
+    }
+
+    #[func]
     pub fn modify_vertex(&mut self, meta_index_id: MetaIndexId, position: Vector3) {
         // It's not enough to update a single vertex
         // Some vertices are "tied," they have the same position but different attributes
@@ -196,4 +212,10 @@ impl Drop for DynamicMesh {
         }
         godot_print!("Freed mesh");
     }
+}
+
+pub fn decompose_meta_index(meta_index: usize) -> (usize, usize) {
+    let offset = meta_index % 3;
+    let start = meta_index - offset;
+    return (start, offset);
 }

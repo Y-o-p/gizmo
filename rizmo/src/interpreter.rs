@@ -1,6 +1,6 @@
 use std::ops::DerefMut;
 
-use crate::dynamic_mesh::{DynamicMesh, MetaIndexId};
+use crate::dynamic_mesh::{DynamicMesh, MetaIndexId, decompose_meta_index};
 use godot::prelude::*;
 
 enum Command {
@@ -19,25 +19,20 @@ enum Command {
 }
 
 impl Command {
-    fn call(&self, mesh: &mut DynamicMesh, selections: &mut Vec<MetaIndexId>) {
+    fn call(&self, mesh: &mut DynamicMesh, selections: &mut Array<MetaIndexId>) {
         assert!(selections.len() > 0);
-        let selection = *selections.last().unwrap();
+        let selection = selections.back().unwrap();
         let meta_index = mesh.get_meta_index(selection) as usize;
-        fn decompose_meta_index(meta_index: usize) -> (usize, usize) {
-            let offset = meta_index % 3;
-            let start = meta_index - offset;
-            return (start, offset);
-        }
         match self {
-            Command::PushSelection => selections.push(*selections.last().unwrap()),
+            Command::PushSelection => selections.push(selections.back().unwrap()),
             Command::PopSelection => {
                 selections.pop();
             }
-            Command::MoveFaceSelection => mesh.traverse_connection(*selections.last().unwrap()),
+            Command::MoveFaceSelection => mesh.traverse_connection(selections.back().unwrap()),
             Command::MoveEdgeSelection => {
                 assert!(
                     mesh.tracked_indices
-                        .contains_key(selections.last().unwrap())
+                        .contains_key(&selections.back().unwrap())
                 );
                 let (start, offset) = decompose_meta_index(meta_index);
                 mesh.tracked_indices
@@ -100,7 +95,9 @@ impl Command {
 #[class(init, base=Node)]
 struct Interpreter {
     commands: Vec<Command>,
-    selections: Vec<MetaIndexId>,
+    #[var]
+    selections: Array<MetaIndexId>,
+    #[var]
     #[init(val = DynamicMesh::new_alloc())]
     mesh: Gd<DynamicMesh>,
     base: Base<Node>,
