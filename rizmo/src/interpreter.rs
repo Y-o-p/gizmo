@@ -99,16 +99,17 @@ impl Command {
 struct Interpreter {
     commands: Vec<Command>,
     selections: Vec<MetaIndexId>,
-
-    #[export]
-    mesh: Option<Gd<DynamicMesh>>,
+    #[init(val = DynamicMesh::new_alloc())]
+    mesh: Gd<DynamicMesh>,
+    base: Base<Node>,
 }
 
 #[godot_api]
 impl INode for Interpreter {
     fn ready(&mut self) {
-        self.selections
-            .push(self.mesh.as_mut().unwrap().bind_mut().track_index(0));
+        self.to_gd().add_child(&self.mesh);
+        godot_print!("Interpreter added DynamicMesh to scene.");
+        self.selections.push(self.mesh.bind_mut().track_index(0));
     }
 }
 

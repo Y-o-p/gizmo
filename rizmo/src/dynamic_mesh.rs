@@ -11,18 +11,13 @@ pub type MetaIndexId = i32;
 // DynamicMesh works by overestimated the resources needed. It allocates a bunch of memory upfront,
 // gives it to Godot, and then subsequent updates to the mesh are done through RenderingServer.mesh_surface_update_*_region.
 #[derive(GodotClass)]
-#[class(base=Node3D)]
+#[class(init, base=Node3D)]
 pub struct DynamicMesh {
-    #[var]
     pub positions: PackedVector3Array,
-    #[var]
     pub indices: PackedInt32Array,
-    #[var]
     pub connections: PackedInt32Array,
-    #[var]
-    mesh_rid: Rid,
-    #[var]
-    instance_rid: Rid,
+    mesh_rid: Option<Rid>,
+    instance_rid: Option<Rid>,
     index: usize,
     pub tracked_indices: HashMap<MetaIndexId, i32>,
     last_meta_index_id: MetaIndexId,
@@ -31,33 +26,22 @@ pub struct DynamicMesh {
 
 #[godot_api]
 impl INode3D for DynamicMesh {
-    fn init(base: Base<Node3D>) -> Self {
-        let mut rs = RenderingServer::singleton();
+    fn ready(&mut self) {
+        self.reset();
 
+        let mut rs = RenderingServer::singleton();
         let mesh_rid = rs.mesh_create();
         let instance_rid = rs.instance_create();
         rs.instance_set_base(instance_rid, mesh_rid);
-        let new_self = Self {
-            positions: PackedVector3Array::new(),
-            indices: PackedInt32Array::new(),
-            connections: PackedInt32Array::new(),
-            mesh_rid: mesh_rid,
-            instance_rid: instance_rid,
-            index: 0,
-            tracked_indices: HashMap::new(),
-            last_meta_index_id: 0,
-            base: base,
-        };
-
-        new_self
-    }
-
-    fn ready(&mut self) {
-        let mut rs = RenderingServer::singleton();
         rs.instance_set_scenario(
-            self.instance_rid,
+            instance_rid,
             self.base().get_world_3d().unwrap().get_scenario(),
         );
+
+        self.mesh_rid = Some(mesh_rid);
+        self.instance_rid = Some(instance_rid);
+
+        self.submit_new_geometry();
     }
 }
 
@@ -106,7 +90,7 @@ pub impl DynamicMesh {
     #[func]
     pub fn submit_new_geometry(&self) {
         let mut rs = RenderingServer::singleton();
-        rs.mesh_clear(self.mesh_rid);
+        rs.mesh_clear(self.mesh_rid.unwrap());
         let surface = varray!(
             self.positions.clone(), // Positions (Vector3)
             Variant::nil(),
@@ -122,7 +106,7 @@ pub impl DynamicMesh {
             Variant::nil(),
             self.indices.clone() // Indices (Vector3)
         );
-        rs.mesh_add_surface_from_arrays(self.mesh_rid, PrimitiveType::TRIANGLES, &surface);
+        rs.mesh_add_surface_from_arrays(self.mesh_rid.unwrap(), PrimitiveType::TRIANGLES, &surface);
     }
 
     #[func]
@@ -132,7 +116,12 @@ pub impl DynamicMesh {
         let positions_as_bytes = self.positions.subarray(i, i + s).to_byte_array();
 
         let mut rs = RenderingServer::singleton();
-        rs.mesh_surface_update_vertex_region(self.mesh_rid, 0, 3 * 4 * index, &positions_as_bytes);
+        rs.mesh_surface_update_vertex_region(
+            self.mesh_rid.unwrap(),
+            0,
+            3 * 4 * index,
+            &positions_as_bytes,
+        );
     }
 
     #[func]
@@ -189,7 +178,22 @@ pub impl DynamicMesh {
 impl Drop for DynamicMesh {
     fn drop(&mut self) {
         let mut rs = RenderingServer::singleton();
-        rs.free_rid(self.mesh_rid);
-        rs.free_rid(self.instance_rid);
+        match self.mesh_rid {
+            Some(rid) => {
+                rs.free_rid(rid);
+            }
+            None => {
+                godot_error!("No RID to free.");
+            }
+        }
+        match self.instance_rid {
+            Some(rid) => {
+                rs.free_rid(rid);
+            }
+            None => {
+                godot_error!("No RID to free.");
+            }
+        }
+        godot_print!("Freed mesh");
     }
 }

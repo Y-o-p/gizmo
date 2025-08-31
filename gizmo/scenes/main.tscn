@@ -1,8 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://dvw6fgot4hlc"]
+[gd_scene load_steps=6 format=3 uid="uid://dvw6fgot4hlc"]
 
-[ext_resource type="Script" uid="uid://btcre3fx7fue0" path="res://scripts/command_stack_container.gd" id="2_0wfyh"]
-[ext_resource type="PackedScene" uid="uid://cc6ht2rvnq6x2" path="res://scenes/model.tscn" id="2_0xm2m"]
-[ext_resource type="Script" uid="uid://ceatqbd81ybj8" path="res://scripts/gui.gd" id="2_sugp2"]
+[ext_resource type="Script" uid="uid://dhmpvkm1we823" path="res://scripts/main.gd" id="1_tefeu"]
+[ext_resource type="Script" uid="uid://bjakpnm48wdg7" path="res://scripts/axes.gd" id="2_tefeu"]
+[ext_resource type="Script" uid="uid://21b5m0wyjjr1" path="res://scripts/camera_3d.gd" id="3_o6xl0"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sugp2"]
 content_margin_left = 0.0
@@ -15,9 +15,14 @@ corner_radius_top_right = 1
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
-[node name="ModelView" type="Node"]
+[sub_resource type="Environment" id="Environment_rka1o"]
+background_mode = 1
+background_color = Color(0.1254902, 0.1254902, 0.1254902, 1)
+ambient_light_sky_contribution = 0.85
+volumetric_fog_sky_affect = 0.328
 
-[node name="Model" parent="." instance=ExtResource("2_0xm2m")]
+[node name="Main" type="Node"]
+script = ExtResource("1_tefeu")
 
 [node name="GUI" type="CanvasLayer" parent="."]
 
@@ -31,7 +36,6 @@ grow_vertical = 0
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
-script = ExtResource("2_sugp2")
 
 [node name="CommandGraph" type="Window" parent="."]
 oversampling_override = 1.0
@@ -44,13 +48,30 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="CommandStackContainer" type="VBoxContainer" parent="CommandGraph/ScrollContainer" node_paths=PackedStringArray("finish_line")]
+[node name="CommandStackContainer" type="VBoxContainer" parent="CommandGraph/ScrollContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-script = ExtResource("2_0wfyh")
-finish_line = NodePath("Panel")
 
 [node name="Panel" type="Panel" parent="CommandGraph/ScrollContainer/CommandStackContainer"]
 custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_sugp2")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_rka1o")
+
+[node name="Axes" type="Node2D" parent="."]
+script = ExtResource("2_tefeu")
+
+[node name="CameraPivot" type="Node3D" parent="."]
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.179163)
+projection = 1
+size = 1.474
+near = 0.001
+script = ExtResource("3_o6xl0")
+
+[node name="Interpreter" type="Interpreter" parent="."]
