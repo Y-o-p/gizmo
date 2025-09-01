@@ -30,7 +30,7 @@ pub struct DynamicMesh {
 #[godot_api]
 impl INode3D for DynamicMesh {
     fn ready(&mut self) {
-        self.reset();
+        self.clear();
 
         let mut rs = RenderingServer::singleton();
         let mesh_rid = rs.mesh_create();
@@ -51,7 +51,7 @@ impl INode3D for DynamicMesh {
 #[godot_api]
 pub impl DynamicMesh {
     #[func]
-    pub fn reset(&mut self) {
+    pub fn clear(&mut self) {
         self.positions.resize(64);
         self.positions.as_mut_slice()[0..4].copy_from_slice(&[
             Vector3::new(0.0, 0.0, 0.0),

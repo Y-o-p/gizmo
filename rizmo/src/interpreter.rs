@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::ops::DerefMut;
 
 use crate::dynamic_mesh::{DynamicMesh, MetaIndexId, decompose_meta_index};
@@ -91,10 +92,14 @@ impl Command {
     }
 }
 
+type CommandId = i32;
+
 #[derive(GodotClass)]
 #[class(init, base=Node)]
 struct Interpreter {
     commands: Vec<Command>,
+    command_map: HashMap<CommandId, usize>,
+    index: CommandId,
     #[var]
     selections: Array<MetaIndexId>,
     #[var]
@@ -114,14 +119,25 @@ impl INode for Interpreter {
 
 #[godot_api]
 impl Interpreter {
+    #[signal]
+    fn command_executed(command_id: CommandId, command_name: GString, params: Dictionary);
+
+    fn get_new_command_id(&mut self) -> CommandId {
+        let index = self.index;
+        self.command_map.insert(index, self.commands.len() - 1);
+        self.index += 1;
+        return index;
+    }
+
     #[func]
     fn reset(&mut self) {
-        self.mesh.bind_mut().deref_mut().reset();
+        self.mesh.bind_mut().deref_mut().clear();
         self.selections.clear();
         self.selections
             .push(self.mesh.bind_mut().deref_mut().track_index(0));
 
         self.call_commands();
+        self.mesh.bind_mut().deref_mut().submit_new_geometry();
     }
 
     fn call_commands(&mut self) {
@@ -135,30 +151,55 @@ impl Interpreter {
         let command = Command::PushSelection;
         command.call(self.mesh.bind_mut().deref_mut(), &mut self.selections);
         self.commands.push(command);
+        self.to_gd().signals().command_executed().emit(
+            self.get_new_command_id(),
+            "Push Selection",
+            &vdict! {},
+        );
     }
     #[func]
     fn pop_selection(&mut self) {
         let command = Command::PopSelection;
         command.call(self.mesh.bind_mut().deref_mut(), &mut self.selections);
         self.commands.push(command);
+        self.to_gd().signals().command_executed().emit(
+            self.get_new_command_id(),
+            "Pop Selection",
+            &vdict! {},
+        );
     }
     #[func]
     fn move_face_selection(&mut self) {
         let command = Command::MoveFaceSelection;
         command.call(self.mesh.bind_mut().deref_mut(), &mut self.selections);
         self.commands.push(command);
+        self.to_gd().signals().command_executed().emit(
+            self.get_new_command_id(),
+            "Move Face Selection",
+            &vdict! {},
+        );
     }
     #[func]
     fn move_edge_selection(&mut self) {
         let command = Command::MoveEdgeSelection;
         command.call(self.mesh.bind_mut().deref_mut(), &mut self.selections);
         self.commands.push(command);
+        self.to_gd().signals().command_executed().emit(
+            self.get_new_command_id(),
+            "Move Edge Selection",
+            &vdict! {},
+        );
     }
     #[func]
     fn translate(&mut self, delta: Vector3) {
         let command = Command::Translate(delta);
         command.call(self.mesh.bind_mut().deref_mut(), &mut self.selections);
         self.commands.push(command);
+        self.to_gd().signals().command_executed().emit(
+            self.get_new_command_id(),
+            "Translate",
+            &vdict! {"delta": delta},
+        );
 
         let mut mesh = self.mesh.bind_mut();
         let len = mesh.deref_mut().positions.len();
@@ -169,6 +210,11 @@ impl Interpreter {
         let command = Command::Split(amount);
         command.call(self.mesh.bind_mut().deref_mut(), &mut self.selections);
         self.commands.push(command);
+        self.to_gd().signals().command_executed().emit(
+            self.get_new_command_id(),
+            "Split",
+            &vdict! {"amount": amount},
+        );
 
         self.mesh.bind_mut().deref_mut().submit_new_geometry();
     }
@@ -177,7 +223,28 @@ impl Interpreter {
         let command = Command::Pull;
         command.call(self.mesh.bind_mut().deref_mut(), &mut self.selections);
         self.commands.push(command);
+        self.to_gd().signals().command_executed().emit(
+            self.get_new_command_id(),
+            "Pull",
+            &vdict! {},
+        );
 
         self.mesh.bind_mut().deref_mut().submit_new_geometry();
+    }
+
+    #[func]
+    fn update_command(&mut self, id: CommandId, args: VariantArray) {
+        assert!(self.command_map.contains_key(&id));
+        let command_index = self.command_map.get(&id).unwrap();
+        match self.commands[*command_index] {
+            Command::Translate(_) => {
+                self.commands[*command_index] = Command::Translate(args.at(0).to());
+            }
+            Command::Split(_) => {
+                self.commands[*command_index] = Command::Split(args.at(0).to());
+            }
+            _ => (),
+        };
+        self.reset();
     }
 }
