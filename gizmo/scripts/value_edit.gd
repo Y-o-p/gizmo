@@ -1,4 +1,4 @@
-extends LineEdit
+extends Control
 class_name ValueEdit
 
 signal value_changed(new_value)
@@ -6,36 +6,47 @@ signal value_changed(new_value)
 var value
 
 func _init(initial_value: Variant) -> void:
-	max_length = 7
-	
-	var value_to_string: Callable
-	var string_to_value: Callable
 	var type = typeof(initial_value)
+	self.value = initial_value
 	match type:
-		TYPE_FLOAT:
-			value_to_string = func (new_value: float) -> String:
-				return String.num_scientific(new_value)
-			string_to_value = func (string: String) -> float:
-				return string.to_float()
-		TYPE_INT:
-			value_to_string = func (new_value: int) -> String:
-				return String.num_int64(new_value)
-			string_to_value = func (string: String) -> float:
-				return string.to_int()
+		TYPE_STRING:
+			var line_edit := LineEdit.new()
+			line_edit.text = value
+			line_edit.text_changed.connect(func(val):
+				value = val
+				value_changed.emit(val)
+			)
+			add_child(line_edit)
+		TYPE_FLOAT, TYPE_INT:
+			var spin_box := SpinBox.new()
+			spin_box.value = value
+			spin_box.value_changed.connect(func(val):
+				value = val
+				value_changed.emit(val)
+			)
+			add_child(spin_box)
+		TYPE_VECTOR3:
+			var labels := [Label.new(), Label.new(), Label.new()]
+			labels[0].text = "x"
+			labels[1].text = "y"
+			labels[2].text = "z"
+			
+			
+			var spin_boxes := [SpinBox.new(), SpinBox.new(), SpinBox.new()]
+			var hbox := HBoxContainer.new()
+			for i in range(3):
+				hbox.add_child(labels[i])
+				
+				spin_boxes[i].value = initial_value[i]
+				spin_boxes[i].step = 0.01
+				
+				spin_boxes[i].value_changed.connect(func (val):
+					value[i] = val
+					value_changed.emit(value)
+				)
+				hbox.add_child(spin_boxes[i])
+			
+			add_child(hbox)
 		_:
 			push_error("value_edit doesn't support type %s" % type)
 			return
-
-	self.value = initial_value
-	text = value_to_string.call(value)
-	self.text_changed.connect(func(new_text: String):
-		value = string_to_value.call(new_text)
-		value_changed.emit(value)
-	)
-	
-	self.editing_toggled.connect(func(editing: bool):
-		if editing:
-			return
-
-		text = value_to_string.call(value)
-	)

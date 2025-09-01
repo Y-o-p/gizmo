@@ -22,3 +22,13 @@ func _input(event: InputEvent):
 		%Interpreter.split(0.5)
 	elif event.is_action_pressed("pull"):
 		%Interpreter.pull()
+
+func _on_interpreter_command_executed(command_id:  int, command_name:  String, command_args:  Dictionary) -> void:
+	var command_editor = Scenes.COMMAND_EDITOR.instantiate()
+	command_editor.command_id = command_id
+	command_editor.command_name = command_name
+	command_editor.command_args = command_args
+	command_editor.parameters_changed.connect(%Interpreter.update_command)
+	%CommandStackContainer.add_child(command_editor)
+
+	
