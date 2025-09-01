@@ -20,7 +20,6 @@ config/features=PackedStringArray("4.5", "Forward Plus")
 
 Scenes="*res://globals/scenes.gd"
 Draw3D="*res://globals/draw_3d.gd"
-Macros="*res://globals/macros.gd"
 Helpers="*res://scripts/helpers.gd"
 uuid="*res://addons/uuid/uuid.gd"
 
