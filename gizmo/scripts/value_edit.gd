@@ -17,7 +17,18 @@ func _init(initial_value: Variant) -> void:
 				value_changed.emit(val)
 			)
 			add_child(line_edit)
-		TYPE_FLOAT, TYPE_INT:
+		TYPE_FLOAT:
+			var spin_box := SpinBox.new()
+			spin_box.value = value
+			spin_box.min_value = 0.0
+			spin_box.max_value = 1.0
+			spin_box.step = 0.01
+			spin_box.value_changed.connect(func(val):
+				value = val
+				value_changed.emit(val)
+			)
+			add_child(spin_box)
+		TYPE_INT:
 			var spin_box := SpinBox.new()
 			spin_box.value = value
 			spin_box.value_changed.connect(func(val):
