@@ -179,9 +179,8 @@ pub impl DynamicMesh {
         let mut update_next_vertex = || {
             self.positions[self.indices[next_meta_index as usize] as usize] = position;
             next_meta_index = self.connections[next_meta_index as usize];
-            let face_offset = next_meta_index % 3;
-            let next_edge = (face_offset + 1) % 3;
-            next_meta_index = next_meta_index - face_offset + next_edge;
+            let (start, offset) = decompose_meta_index(next_meta_index as usize);
+            next_meta_index = (start + (offset + 1) % 3) as i32;
             return next_meta_index;
         };
         let mut next = update_next_vertex();

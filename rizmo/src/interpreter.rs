@@ -116,7 +116,7 @@ impl Command {
                         mesh.connections[start + (offset + 2) % 3],
                         num_indices as i32,
                         mesh.connections[start + (offset + 1) % 3],
-                        (start + (offset + 1) % 3) as i32,
+                        meta_index as i32,
                     ],
                 );
             }

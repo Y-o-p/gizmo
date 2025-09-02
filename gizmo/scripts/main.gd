@@ -17,9 +17,7 @@ func _input(event: InputEvent):
 	elif event.is_action_pressed("move_edge_selection"):
 		%Interpreter.move_edge_selection()
 	elif event.is_action_pressed("translate"):
-		print(%Interpreter.mesh.positions)
 		%Interpreter.translate(Vector3(1, 0, 0))
-		print(%Interpreter.mesh.positions)
 	elif event.is_action_pressed("split"):
 		%Interpreter.split(0.5)
 	elif event.is_action_pressed("pull"):
