@@ -59,10 +59,6 @@ impl Command {
                 let new_position = (1.0 - amount) * first_position + *amount * second_position;
                 let new_index = mesh.add_vertex(new_position);
 
-                // Update the old faces to use the new vertex
-                mesh.indices[start_a + (offset_a + 1) % 3] = new_index as i32;
-                mesh.indices[start_b + (offset_b + 1) % 3] = new_index as i32;
-
                 // Add two new faces
                 let face_a = &mesh.indices.as_slice()[start_a..start_a + 3];
                 let face_b = &mesh.indices.as_slice()[start_b..start_b + 3];
@@ -78,14 +74,17 @@ impl Command {
                         face_b[(offset_b + 2) % 3],
                     ],
                     [
-                        meta_index as i32,
-                        conn_a[(offset_a + 1) % 3],
-                        conn_a[(offset_a + 2) % 3],
                         (start_b + offset_b) as i32,
+                        conn_a[(offset_a + 1) % 3],
+                        (start_a + (offset_a + 1) % 3) as i32,
+                        meta_index as i32,
                         conn_b[(offset_b + 1) % 3],
-                        conn_b[(offset_b + 2) % 3],
+                        (start_b + (offset_b + 1) % 3) as i32,
                     ],
                 );
+                // Update the old faces to use the new vertex
+                mesh.indices[start_a + (offset_a + 1) % 3] = new_index as i32;
+                mesh.indices[start_b + (offset_b + 1) % 3] = new_index as i32;
             }
             Command::Pull => {}
         };

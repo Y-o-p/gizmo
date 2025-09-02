@@ -62,7 +62,7 @@ pub impl DynamicMesh {
 
         self.indices = PackedInt32Array::from(&[0, 2, 1, 0, 1, 3, 0, 3, 2, 3, 1, 2]);
         self.connections = PackedInt32Array::from(&[8, 10, 3, 2, 9, 6, 5, 11, 0, 4, 1, 7]);
-        self.index = 0;
+        self.index = 4;
         self.tracked_indices.clear();
         self.last_meta_index_id = 0;
     }
