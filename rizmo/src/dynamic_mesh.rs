@@ -86,7 +86,7 @@ pub impl DynamicMesh {
             if *connection > (connections_length - 1) as i32 {
                 continue;
             }
-            self.connections[*connection as usize] = (connections_length - 1 + offset) as i32;
+            self.connections[*connection as usize] = (connections_length + offset) as i32;
         }
     }
 

@@ -86,7 +86,40 @@ impl Command {
                 mesh.indices[start_a + (offset_a + 1) % 3] = new_index as i32;
                 mesh.indices[start_b + (offset_b + 1) % 3] = new_index as i32;
             }
-            Command::Pull => {}
+            Command::Pull => {
+                // Create new vertex
+                let new_index = mesh.add_vertex(
+                    mesh.positions
+                        .get(mesh.indices.get(meta_index).unwrap() as usize)
+                        .unwrap(),
+                );
+
+                // Set the old face to use the new index
+                let old_index = mesh.indices[meta_index];
+                mesh.indices[meta_index] = new_index as i32;
+
+                // Add two new faces
+                let (start, offset) = decompose_meta_index(meta_index);
+                let num_indices = mesh.indices.len();
+                mesh.add_faces(
+                    [
+                        old_index,
+                        new_index as i32,
+                        mesh.indices[start + (offset + 2) % 3],
+                        new_index as i32,
+                        old_index as i32,
+                        mesh.indices[start + (offset + 1) % 3],
+                    ],
+                    [
+                        (num_indices + 3) as i32,
+                        (start + (offset + 2) % 3) as i32,
+                        mesh.connections[start + (offset + 2) % 3],
+                        num_indices as i32,
+                        mesh.connections[start + (offset + 1) % 3],
+                        (start + (offset + 1) % 3) as i32,
+                    ],
+                );
+            }
         };
     }
 }

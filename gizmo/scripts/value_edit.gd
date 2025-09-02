@@ -50,6 +50,8 @@ func _init(initial_value: Variant) -> void:
 				
 				spin_boxes[i].value = initial_value[i]
 				spin_boxes[i].step = 0.01
+				spin_boxes[i].allow_lesser = true
+				spin_boxes[i].allow_greater = true
 				
 				spin_boxes[i].value_changed.connect(func (val):
 					value[i] = val
