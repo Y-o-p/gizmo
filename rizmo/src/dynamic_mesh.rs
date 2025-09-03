@@ -15,6 +15,7 @@ pub type MetaIndexId = i32;
 pub struct DynamicMesh {
     #[var]
     pub positions: PackedVector3Array,
+    deleted_vertices: Vec<usize>,
     #[var]
     pub indices: PackedInt32Array,
     #[var]
@@ -50,9 +51,11 @@ impl INode3D for DynamicMesh {
 
 #[godot_api]
 pub impl DynamicMesh {
+    pub const BLOCK_SIZE: usize = 64;
+
     #[func]
     pub fn clear(&mut self) {
-        self.positions.resize(64);
+        self.positions.resize(DynamicMesh::BLOCK_SIZE);
         self.positions.as_mut_slice()[0..4].copy_from_slice(&[
             Vector3::new(0.0, 0.0, 0.0),
             Vector3::new(0.0, 0.0, 1.0),
@@ -67,7 +70,66 @@ pub impl DynamicMesh {
         self.last_meta_index_id = 0;
     }
 
+    // TODO: Test to make sure this works
+    pub fn clean(&mut self) {
+        if self.deleted_vertices.is_empty() {
+            return;
+        }
+        self.deleted_vertices.sort();
+        let mut deleted_start_index = 0;
+        let mut deleted_end_index = self.deleted_vertices.len() - 1;
+        let mut used_end = self.index - 1;
+
+        while used_end == self.deleted_vertices[deleted_end_index] {
+            if deleted_end_index == 0 {
+                break;
+            }
+
+            used_end -= 1;
+            deleted_end_index -= 1;
+        }
+
+        while used_end > self.deleted_vertices[deleted_start_index] {
+            // Move it to the first deleted element
+            self.positions[self.deleted_vertices[deleted_start_index]] = self.positions[used_end];
+
+            // Update indices
+            for i in 0..self.indices.len() {
+                if self.indices[i] == used_end as i32 {
+                    self.indices[i] = self.deleted_vertices[deleted_start_index] as i32;
+                }
+            }
+
+            // Move the starting index forward
+            deleted_start_index += 1;
+
+            // Find the final element that isn't deleted
+            while used_end == self.deleted_vertices[deleted_end_index] {
+                if deleted_end_index == 0 {
+                    break;
+                }
+                used_end -= 1;
+                deleted_end_index -= 1;
+            }
+        }
+
+        self.index = used_end;
+        self.deleted_vertices.clear();
+        let new_size = (self.index as f32 / DynamicMesh::BLOCK_SIZE as f32).ceil() as usize
+            * DynamicMesh::BLOCK_SIZE;
+        self.positions.resize(new_size);
+    }
+
+    pub fn request_more_memory(&mut self) {
+        let new_size = self.positions.len() + DynamicMesh::BLOCK_SIZE;
+        self.positions.resize(new_size);
+    }
+
     pub fn add_vertex(&mut self, position: Vector3) -> usize {
+        if self.index % DynamicMesh::BLOCK_SIZE == 0 {
+            self.request_more_memory();
+        }
+
         let index = self.index;
         self.positions[index] = position;
         self.index += 1;
