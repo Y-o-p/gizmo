@@ -60,6 +60,16 @@ func _init(initial_value: Variant) -> void:
 				hbox.add_child(spin_boxes[i])
 			
 			add_child(hbox)
+		TYPE_COLOR:
+			var color_button := ColorPickerButton.new()
+			color_button.custom_minimum_size = Vector2(30, 30)
+			color_button.color = initial_value
+			color_button.color_changed.connect(func(val):
+				value = val
+				value_changed.emit(val)
+				
+			)
+			add_child(color_button)
 		_:
 			push_error("value_edit doesn't support type %s" % type)
 			return

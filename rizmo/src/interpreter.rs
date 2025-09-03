@@ -277,7 +277,7 @@ impl Interpreter {
         self.to_gd().signals().command_executed().emit(
             self.get_new_command_id(),
             "Color",
-            &vdict! {},
+            &vdict! {"color": color},
         );
 
         self.mesh.bind_mut().deref_mut().submit_new_geometry();
@@ -293,6 +293,9 @@ impl Interpreter {
             }
             Command::Split(_) => {
                 self.commands[*command_index] = Command::Split(args.at(0).to());
+            }
+            Command::Color(_) => {
+                self.commands[*command_index] = Command::Color(args.at(0).to());
             }
             _ => (),
         };
