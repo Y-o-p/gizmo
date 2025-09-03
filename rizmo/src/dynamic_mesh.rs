@@ -182,6 +182,7 @@ pub impl DynamicMesh {
             self.indices.clone() // Indices (Vector3)
         );
         rs.mesh_add_surface_from_arrays(self.mesh_rid.unwrap(), PrimitiveType::TRIANGLES, &surface);
+        rs.mesh_surface_set_material(self.mesh_rid.unwrap(), 0, self.material.get_rid());
     }
 
     #[func]

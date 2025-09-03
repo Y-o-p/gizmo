@@ -22,6 +22,8 @@ func _input(event: InputEvent):
 		%Interpreter.split(0.5)
 	elif event.is_action_pressed("pull"):
 		%Interpreter.pull()
+	elif event.is_action_pressed("color"):
+		%Interpreter.color(Color(1.0, 1.0, 1.0))
 	
 func _on_interpreter_command_executed(command_id:  int, command_name:  String, command_args:  Dictionary) -> void:
 	var command_editor = Scenes.COMMAND_EDITOR.instantiate()

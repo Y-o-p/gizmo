@@ -17,6 +17,9 @@ enum Command {
     Translate(Vector3),
     Split(f32),
     Pull,
+
+    // Vertex attributes
+    Color(Color),
 }
 
 impl Command {
@@ -119,6 +122,9 @@ impl Command {
                         meta_index as i32,
                     ],
                 );
+            }
+            Command::Color(color) => {
+                mesh.colors[mesh.indices[meta_index] as usize] = *color;
             }
         };
     }
@@ -258,6 +264,19 @@ impl Interpreter {
         self.to_gd().signals().command_executed().emit(
             self.get_new_command_id(),
             "Pull",
+            &vdict! {},
+        );
+
+        self.mesh.bind_mut().deref_mut().submit_new_geometry();
+    }
+    #[func]
+    fn color(&mut self, color: Color) {
+        let command = Command::Color(color);
+        command.call(self.mesh.bind_mut().deref_mut(), &mut self.selections);
+        self.commands.push(command);
+        self.to_gd().signals().command_executed().emit(
+            self.get_new_command_id(),
+            "Color",
             &vdict! {},
         );
 
