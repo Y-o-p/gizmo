@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use godot::classes::{RenderingServer, rendering_server::PrimitiveType};
+use godot::classes::StandardMaterial3D;
+use godot::classes::{RenderingServer, base_material_3d::Flags, rendering_server::PrimitiveType};
 use godot::prelude::*;
 
 pub type MetaIndexId = i32;
@@ -15,6 +16,8 @@ pub type MetaIndexId = i32;
 pub struct DynamicMesh {
     #[var]
     pub positions: PackedVector3Array,
+    #[var]
+    pub colors: PackedColorArray,
     deleted_vertices: Vec<usize>,
     #[var]
     pub indices: PackedInt32Array,
@@ -22,6 +25,8 @@ pub struct DynamicMesh {
     pub connections: PackedInt32Array,
     mesh_rid: Option<Rid>,
     instance_rid: Option<Rid>,
+    #[init(val = StandardMaterial3D::new_gd())]
+    material: Gd<StandardMaterial3D>,
     index: usize,
     pub tracked_indices: HashMap<MetaIndexId, i32>,
     last_meta_index_id: MetaIndexId,
@@ -46,6 +51,9 @@ impl INode3D for DynamicMesh {
         self.instance_rid = Some(instance_rid);
 
         self.submit_new_geometry();
+        self.material
+            .set_flag(Flags::ALBEDO_FROM_VERTEX_COLOR, true);
+        rs.mesh_surface_set_material(mesh_rid, 0, self.material.get_rid());
     }
 }
 
@@ -62,6 +70,7 @@ pub impl DynamicMesh {
             Vector3::new(0.0, 1.0, 0.0),
             Vector3::new(1.0, 0.0, 0.0),
         ]);
+        self.colors.resize(DynamicMesh::BLOCK_SIZE);
 
         self.indices = PackedInt32Array::from(&[0, 2, 1, 0, 1, 3, 0, 3, 2, 3, 1, 2]);
         self.connections = PackedInt32Array::from(&[8, 10, 3, 2, 9, 6, 5, 11, 0, 4, 1, 7]);
@@ -123,6 +132,7 @@ pub impl DynamicMesh {
     pub fn request_more_memory(&mut self) {
         let new_size = self.positions.len() + DynamicMesh::BLOCK_SIZE;
         self.positions.resize(new_size);
+        self.colors.resize(new_size);
     }
 
     pub fn add_vertex(&mut self, position: Vector3) -> usize {
@@ -160,7 +170,7 @@ pub impl DynamicMesh {
             self.positions.clone(), // Positions (Vector3)
             Variant::nil(),
             Variant::nil(),
-            Variant::nil(),
+            self.colors.clone(),
             Variant::nil(),
             Variant::nil(),
             Variant::nil(),
