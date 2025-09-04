@@ -32,6 +32,20 @@ unique_name_in_owner = true
 unique_name_in_owner = true
 script = ExtResource("2_jyhfs")
 
+[node name="CommandFileWriter" type="FileDialog" parent="."]
+unique_name_in_owner = true
+access = 1
+filters = PackedStringArray("*.json;JSON")
+use_native_dialog = true
+
+[node name="CommandFileReader" type="FileDialog" parent="."]
+unique_name_in_owner = true
+title = "Open a File"
+file_mode = 0
+access = 1
+filters = PackedStringArray("*.json;JSON")
+use_native_dialog = true
+
 [node name="GUI" type="CanvasLayer" parent="."]
 
 [node name="MarginContainer" type="MarginContainer" parent="GUI"]
@@ -85,3 +99,5 @@ near = 0.001
 script = ExtResource("3_o6xl0")
 
 [connection signal="command_executed" from="Interpreter" to="." method="_on_interpreter_command_executed"]
+[connection signal="file_selected" from="CommandFileWriter" to="." method="_on_command_file_writer_file_selected"]
+[connection signal="file_selected" from="CommandFileReader" to="." method="_on_command_file_reader_file_selected"]

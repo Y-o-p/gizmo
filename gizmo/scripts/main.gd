@@ -1,5 +1,6 @@
 extends Node
 
+
 func _process(delta: float):
 	var face_positions = Array(%Interpreter.mesh.get_face_positions(%Interpreter.selections.back()))
 	%Camera3D.desired_position = face_positions.reduce(func(x, y): return x + y) / 3.0
@@ -8,7 +9,11 @@ func _process(delta: float):
 		%ModelOverlay.set_face_vertex_positions(face_positions)
 
 func _input(event: InputEvent):
-	if event.is_action_pressed("push_selection"):
+	if event.is_action_pressed("save"):
+		%CommandFileWriter.visible = true
+	elif event.is_action_pressed("load"):
+		%CommandFileReader.visible = true
+	elif event.is_action_pressed("push_selection"):
 		%Interpreter.push_selection()
 	elif event.is_action_pressed("pop_selection"):
 		%Interpreter.pop_selection()
@@ -33,4 +38,23 @@ func _on_interpreter_command_executed(command_id:  int, command_name:  String, c
 	command_editor.parameters_changed.connect(%Interpreter.update_command)
 	%CommandStackContainer.add_child(command_editor)
 
-	
+
+func _on_command_file_writer_file_selected(path:  String) -> void:
+	var file = FileAccess.open(path, FileAccess.WRITE)
+	if file:
+		file.store_string(%Interpreter.commands_as_json_string())
+		file.close()
+		print("Saved a command stack to: %s" % path)
+	else:
+		push_error("Failed to save command stack to: %s", path)
+
+
+func _on_command_file_reader_file_selected(path:  String) -> void:
+	var file = FileAccess.open(path, FileAccess.READ)
+	if file:
+		print(file.get_as_text())
+		%Interpreter.load_commands_from_json_string(file.get_as_text())
+		file.close()
+		print("Loaded a command stack from: %s" % path)
+	else:
+		push_error("Failed to load command stack from: %s", path)

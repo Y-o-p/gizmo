@@ -3,7 +3,9 @@ use std::ops::DerefMut;
 
 use crate::dynamic_mesh::{DynamicMesh, MetaIndexId, decompose_meta_index};
 use godot::prelude::*;
+use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize, Debug)]
 enum Command {
     // Selection stack manipulation
     PushSelection,
@@ -128,6 +130,19 @@ impl Command {
             }
         };
     }
+
+    fn to_signal_params(&self) -> (GString, Dictionary) {
+        match self {
+            Command::PushSelection => ("Push Selection".into(), vdict! {}),
+            Command::PopSelection => ("Pop Selection".into(), vdict! {}),
+            Command::MoveFaceSelection => ("Move Face Selection".into(), vdict! {}),
+            Command::MoveEdgeSelection => ("Move Edge Selection".into(), vdict! {}),
+            Command::Translate(delta) => ("Translate".into(), vdict! {"delta": *delta}),
+            Command::Split(amount) => ("Split".into(), vdict! {"amount": *amount}),
+            Command::Pull => ("Pull".into(), vdict! {}),
+            Command::Color(color) => ("Color".into(), vdict! {"color": *color}),
+        }
+    }
 }
 
 type CommandId = i32;
@@ -160,13 +175,6 @@ impl Interpreter {
     #[signal]
     fn command_executed(command_id: CommandId, command_name: GString, params: Dictionary);
 
-    fn get_new_command_id(&mut self) -> CommandId {
-        let index = self.index;
-        self.command_map.insert(index, self.commands.len() - 1);
-        self.index += 1;
-        return index;
-    }
-
     #[func]
     fn reset(&mut self) {
         self.mesh.bind_mut().deref_mut().clear();
@@ -178,12 +186,29 @@ impl Interpreter {
         self.mesh.bind_mut().deref_mut().submit_new_geometry();
     }
 
-    fn call_commands(&mut self) {
-        for command in self.commands.iter() {
+    #[func]
+    fn commands_as_json_string(&self) -> GString {
+        // Wow 0_0
+        return GString::from(serde_json::to_string(&self.commands).unwrap());
+    }
+
+    #[func]
+    fn load_commands_from_json_string(&mut self, string: GString) {
+        let commands: Vec<Command> = serde_json::from_str(&string.to_string()).unwrap();
+        for command in commands.into_iter() {
+            let (name, args) = command.to_signal_params();
             command.call(self.mesh.bind_mut().deref_mut(), &mut self.selections);
+            self.commands.push(command);
+            self.to_gd()
+                .signals()
+                .command_executed()
+                .emit(self.get_new_command_id(), &name, &args);
         }
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    // Command functions
+    ///////////////////////////////////////////////////////////////////////////
     #[func]
     fn push_selection(&mut self) {
         let command = Command::PushSelection;
@@ -283,6 +308,8 @@ impl Interpreter {
         self.mesh.bind_mut().deref_mut().submit_new_geometry();
     }
 
+    ///////////////////////////////////////////////////////////////////////////////
+
     #[func]
     fn update_command(&mut self, id: CommandId, args: VariantArray) {
         assert!(self.command_map.contains_key(&id));
@@ -300,5 +327,18 @@ impl Interpreter {
             _ => (),
         };
         self.reset();
+    }
+
+    fn get_new_command_id(&mut self) -> CommandId {
+        let index = self.index;
+        self.command_map.insert(index, self.commands.len() - 1);
+        self.index += 1;
+        return index;
+    }
+
+    fn call_commands(&mut self) {
+        for command in self.commands.iter() {
+            command.call(self.mesh.bind_mut().deref_mut(), &mut self.selections);
+        }
     }
 }
