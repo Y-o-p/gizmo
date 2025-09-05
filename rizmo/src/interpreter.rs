@@ -204,6 +204,7 @@ impl Interpreter {
                 .command_executed()
                 .emit(self.get_new_command_id(), &name, &args);
         }
+        self.reset();
     }
 
     ///////////////////////////////////////////////////////////////////////////

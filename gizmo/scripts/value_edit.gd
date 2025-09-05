@@ -19,10 +19,11 @@ func _init(initial_value: Variant) -> void:
 			add_child(line_edit)
 		TYPE_FLOAT:
 			var spin_box := SpinBox.new()
-			spin_box.value = value
+			spin_box.step = 0.01
 			spin_box.min_value = 0.0
 			spin_box.max_value = 1.0
-			spin_box.step = 0.01
+			spin_box.rounded = false
+			spin_box.value = initial_value
 			spin_box.value_changed.connect(func(val):
 				value = val
 				value_changed.emit(val)
