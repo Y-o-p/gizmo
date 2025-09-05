@@ -22,10 +22,6 @@ Scenes="*res://globals/scenes.gd"
 Draw3D="*res://globals/draw_3d.gd"
 uuid="*res://addons/uuid/uuid.gd"
 
-[display]
-
-window/subwindows/embed_subwindows=false
-
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/uuid/plugin.cfg")

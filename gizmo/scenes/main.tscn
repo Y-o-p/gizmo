@@ -15,13 +15,6 @@ volumetric_fog_sky_affect = 0.328
 [node name="Main" type="Node"]
 script = ExtResource("1_tefeu")
 
-[node name="Interpreter" type="Interpreter" parent="."]
-unique_name_in_owner = true
-
-[node name="ModelOverlay" type="Node" parent="."]
-unique_name_in_owner = true
-script = ExtResource("2_jyhfs")
-
 [node name="CommandFileWriter" type="FileDialog" parent="."]
 unique_name_in_owner = true
 access = 1
@@ -49,25 +42,43 @@ theme_override_constants/margin_left = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="CommandGraph" type="Window" parent="."]
-oversampling_override = 1.0
-position = Vector2i(0, 36)
+[node name="HSplitContainer" type="HSplitContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="CommandStackContainer" parent="CommandGraph" instance=ExtResource("3_tbgi4")]
+[node name="ScrollContainer" type="ScrollContainer" parent="HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CommandStackContainer" parent="HSplitContainer/ScrollContainer" instance=ExtResource("3_tbgi4")]
 unique_name_in_owner = true
+layout_mode = 2
 editable = true
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+[node name="ModelViewContainer" type="SubViewportContainer" parent="HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 3.0
+stretch = true
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("Environment_rka1o")
+[node name="ModelView" type="SubViewport" parent="HSplitContainer/ModelViewContainer"]
+handle_input_locally = false
+size = Vector2i(858, 648)
+render_target_update_mode = 4
 
-[node name="Axes" type="Node2D" parent="."]
-script = ExtResource("2_tefeu")
+[node name="Interpreter" type="Interpreter" parent="HSplitContainer/ModelViewContainer/ModelView"]
+unique_name_in_owner = true
 
-[node name="CameraPivot" type="Node3D" parent="."]
+[node name="ModelOverlay" type="Node" parent="HSplitContainer/ModelViewContainer/ModelView"]
+unique_name_in_owner = true
+script = ExtResource("2_jyhfs")
 
-[node name="Camera3D" type="Camera3D" parent="CameraPivot"]
+[node name="CameraPivot" type="Node3D" parent="HSplitContainer/ModelViewContainer/ModelView"]
+
+[node name="Camera3D" type="Camera3D" parent="HSplitContainer/ModelViewContainer/ModelView/CameraPivot"]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.179163)
 projection = 1
@@ -75,7 +86,15 @@ size = 1.474
 near = 0.001
 script = ExtResource("3_o6xl0")
 
-[connection signal="command_executed" from="Interpreter" to="." method="_on_interpreter_command_executed"]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="HSplitContainer/ModelViewContainer/ModelView"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="HSplitContainer/ModelViewContainer/ModelView"]
+environment = SubResource("Environment_rka1o")
+
+[node name="Axes" type="Node2D" parent="HSplitContainer/ModelViewContainer/ModelView"]
+script = ExtResource("2_tefeu")
+
 [connection signal="file_selected" from="CommandFileWriter" to="." method="_on_command_file_writer_file_selected"]
 [connection signal="file_selected" from="CommandFileReader" to="." method="_on_command_file_reader_file_selected"]
-[connection signal="finish_line_changed" from="CommandGraph/CommandStackContainer" to="." method="_on_command_stack_container_finish_line_changed"]
+[connection signal="finish_line_changed" from="HSplitContainer/ScrollContainer/CommandStackContainer" to="." method="_on_command_stack_container_finish_line_changed"]
+[connection signal="command_executed" from="HSplitContainer/ModelViewContainer/ModelView/Interpreter" to="." method="_on_interpreter_command_executed"]

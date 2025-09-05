@@ -235,18 +235,30 @@ impl Interpreter {
     #[func]
     fn translate(&mut self, delta: Vector3) {
         self.add_new_command(Command::Translate(delta));
+        // TODO: Only update the part that got changed
+        let size = self.mesh.bind_mut().deref_mut().positions.len();
+        self.mesh
+            .bind_mut()
+            .deref_mut()
+            .submit_updated_positions(0, size as i32);
     }
     #[func]
     fn split(&mut self, amount: f32) {
         self.add_new_command(Command::Split(amount));
+        // TODO: Only update the part that got changed
+        self.mesh.bind_mut().deref_mut().submit_new_geometry();
     }
     #[func]
     fn pull(&mut self) {
         self.add_new_command(Command::Pull);
+        // TODO: Only update the part that got changed
+        self.mesh.bind_mut().deref_mut().submit_new_geometry();
     }
     #[func]
     fn color(&mut self, color: Color) {
         self.add_new_command(Command::Color(color));
+        // TODO: Only update the part that got changed
+        self.mesh.bind_mut().deref_mut().submit_new_geometry();
     }
 
     ///////////////////////////////////////////////////////////////////////////////
