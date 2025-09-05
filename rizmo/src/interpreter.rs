@@ -186,8 +186,9 @@ impl Interpreter {
     }
 
     #[func]
-    fn undo_command_at(&mut self, id: CommandId) {
+    fn undo_command(&mut self, id: CommandId) {
         self.commands.remove(&id);
+        self.reset();
     }
 
     #[func]

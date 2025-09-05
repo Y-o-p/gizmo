@@ -13,6 +13,11 @@ func _input(event: InputEvent):
 		%CommandFileWriter.visible = true
 	elif event.is_action_pressed("load"):
 		%CommandFileReader.visible = true
+	elif event.is_action_pressed("undo_command"):
+		var editor: CommandEditor = %CommandStackContainer.get_command_editor()
+		if editor != null:
+			editor.queue_free()
+			%Interpreter.undo_command(editor.command_id)
 	elif event.is_action_pressed("push_selection"):
 		%Interpreter.push_selection()
 	elif event.is_action_pressed("pop_selection"):
@@ -58,3 +63,7 @@ func _on_command_file_reader_file_selected(path:  String) -> void:
 		print("Loaded a command stack from: %s" % path)
 	else:
 		push_error("Failed to load command stack from: %s", path)
+
+
+func _on_command_stack_container_finish_line_changed(id) -> void:
+	print(id)
